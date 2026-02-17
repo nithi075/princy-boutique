@@ -1,0 +1,283 @@
+/* =========================
+   SECTION
+========================= */
+.newarrivals-wrap {
+  padding: 32px 16px;
+  background: #fcfaf9;
+}
+
+.newarrivals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.newarrivals-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #332d2d;
+}
+
+/* PREMIUM VIEW ALL BUTTON */
+.newarrivals-more {
+  background: #c59898;
+  color: white;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  letter-spacing: .4px;
+  cursor: pointer;
+  transition: .25s ease;
+}
+
+.newarrivals-more:hover {
+  background: #b17d7d;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   SLIDER
+========================= */
+
+.newarrivals-slider {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+}
+
+.newarrivals-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.newarrivals-track {
+  display: flex;
+  gap: 14px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.newarrivals-card {
+  min-width: 160px;
+  max-width: 160px;
+  flex-shrink: 0;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 768px) {
+  .newarrivals-card {
+    min-width: 220px;
+    max-width: 220px;
+  }
+}
+
+/* =========================
+   IMAGE
+========================= */
+
+.newarrivals-imgbox {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.newarrivals-imgbox img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+}
+
+/* gradient overlay */
+.newarrivals-imgbox::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 55%,
+    rgba(0,0,0,0.18) 75%,
+    rgba(0,0,0,0.35) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* =========================
+   WISHLIST BUTTON (SAME AS FEATURED)
+========================= */
+
+.newarrivals-wishlist {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(255,255,255,0.96);
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.06);
+
+  backdrop-filter: blur(6px);
+  box-shadow:
+    0 4px 10px rgba(0,0,0,0.15),
+    inset 0 0 0 0.5px rgba(255,255,255,0.6);
+
+  z-index: 3;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.newarrivals-wishlist:active {
+  transform: scale(.88);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+
+/* svg fix */
+.newarrivals-wishlist svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  position: relative;
+  top: 0.5px;
+  color: #2f2a2a;
+}
+
+.newarrivals-wishlist.liked svg {
+  color: #e63946;
+  fill: #e63946;
+}
+
+/* =========================
+   ADD TO BAG
+========================= */
+
+.newarrivals-overlay {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+}
+
+.newarrivals-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: .8px;
+  font-weight: 600;
+  color: #222;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  transition: .25s ease;
+}
+
+.newarrivals-btn:active {
+  transform: scale(.96);
+}
+
+.newarrivals-btn.added {
+  background: #1f1f1f;
+  color: white;
+}
+
+/* =========================
+   INFO
+========================= */
+
+.newarrivals-info {
+  padding: 10px 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.newarrivals-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  color: #332d2d;
+  margin: 0;
+  line-height: 1.25;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.newarrivals-price {
+  font-weight: 600;
+  font-size: 14px;
+  color: #554a4a;
+}
+/* =========================
+   SKELETON LOADER
+========================= */
+
+.skeleton .newarrivals-imgbox{
+  background:#eee;
+  aspect-ratio:3/4;
+  border-radius:12px;
+}
+
+.line{
+  height:14px;
+  border-radius:6px;
+  margin-bottom:6px;
+  background:#eee;
+}
+
+.line.small{
+  width:60%;
+  height:13px;
+}
+
+.shimmer{
+  position:relative;
+  overflow:hidden;
+}
+
+.shimmer::after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-150%;
+  width:120%;
+  height:100%;
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.6),
+    transparent
+  );
+  animation:shimmer 1.2s infinite;
+}
+
+@keyframes shimmer{
+  100%{ left:150%; }
+}
+
+.newarrivals-card{
+  animation:fadeIn .35s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(8px);}
+  to{opacity:1; transform:translateY(0);}
+}

@@ -1,0 +1,381 @@
+/* ===== GOOGLE FONTS ===== */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500&display=swap');
+
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #faf7f5;
+  color: #2f2f2f;
+}
+
+/* ================= HEADER ================= */
+.lux-header {
+  height: 78px;
+  padding: 0 56px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  background: linear-gradient(to bottom, #fcf9f7, #fbf8f6);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ===== LEFT ===== */
+.lux-left {
+  display: flex;
+  align-items: center;
+  gap: 42px;
+}
+
+/* MOBILE MENU ICON */
+.lux-menu {
+  display: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* DESKTOP NAV */
+.lux-nav {
+  display: flex;
+  gap: 42px;
+}
+
+.lux-nav a {
+  text-decoration: none;
+  font-size: 13.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #444;
+  font-weight: 500;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+.lux-nav a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 1px;
+  background: #9c6b5d;
+  transition: 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.lux-nav a:hover {
+  color: #9c6b5d;
+}
+
+.lux-nav a:hover::after {
+  width: 100%;
+}
+
+/* ===== CENTER LOGO ===== */
+.lux-logo {
+  justify-self: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  color: #9c6b5d;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: 8px;
+  margin-left: 25px;
+}
+
+/* ===== RIGHT ICONS ===== */
+.lux-icons {
+  justify-self: end;
+  display: flex;
+  gap: 18px;
+  font-size: 18px;
+  color: #3b3b3b;
+}
+
+.lux-icons svg {
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.lux-icons svg:hover {
+  color: #9c6b5d;
+  transform: translateY(-1px);
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .lux-header {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 20px;
+  }
+
+  .lux-menu {
+    display: block;
+  }
+
+  .lux-nav {
+    display: none;
+  }
+
+  .lux-logo {
+    font-size: 20px;
+  }
+}
+
+/* ================= OVERLAY ================= */
+.lux-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+}
+
+/* ================= DRAWER ================= */
+.lux-drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 85%;
+  max-width: 320px;
+  height: 100vh;
+  background: #fff;
+  z-index: 100;
+  padding: 24px;
+  transition: 0.35s ease;
+}
+
+.lux-drawer.open {
+  left: 0;
+}
+
+/* CLOSE ICON */
+.lux-close {
+  font-size: 22px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+/* MAIN ITEM */
+.lux-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 500;
+  border-bottom: 1px solid #f2f2f2;
+  cursor: pointer;
+}
+
+/* SHOP WITH LOGO */
+.shop-with-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shop-with-logo img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* SUB HEADER */
+.lux-sub-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+/* SUB ITEMS */
+.lux-sub-item {
+  padding: 14px 0;
+  font-size: 15px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+}
+
+.lux-sub-item:hover {
+  color: #9c6b5d;
+}
+/* PHONE LOGIN BOX */
+.lux-login-box {
+  padding: 18px;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lux-phone-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+}
+
+.lux-phone-input:focus {
+  border-color: #c89b3c;
+}
+
+.lux-login-btn {
+  padding: 12px;
+  background: #c59898;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.lux-login-btn:hover {
+  background: #333;
+}
+/* LOGIN TEXT */
+.lux-login-toggle {
+  padding: 14px 18px;
+  font-weight: 500;
+  color: #c89b3c;
+  cursor: pointer;
+}
+
+.lux-login-toggle:hover {
+  background: #faf7f0;
+}
+
+/* LOGIN BOX */
+.lux-login-box {
+  padding: 15px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lux-phone-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+}
+
+.lux-phone-input:focus {
+  border-color: #c89b3c;
+}
+
+.lux-login-btn {
+  padding: 12px;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* LOGIN DROPDOWN (accordion) */
+.lux-login-dropdown {
+  padding: 14px 0 18px;
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lux-phone-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+.lux-phone-input:focus {
+  border-color: #9c6b5d;
+}
+
+.lux-login-btn {
+  width: 100%;
+  padding: 12px;
+  background: #c59898;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.lux-login-btn:hover {
+  background: #a85f44;
+}
+
+/* arrow rotate animation */
+.arrow-icon {
+  transition: transform 0.25s ease;
+}
+
+.rotate {
+  transform: rotate(90deg);
+}
+/* CATEGORY DROPDOWN */
+.lux-category-dropdown {
+  padding-left: 10px;
+  animation: slideDown 0.25s ease;
+}
+
+/* LOGIN DROPDOWN */
+.lux-login-dropdown {
+  padding: 12px 0 18px;
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.arrow-icon {
+  transition: transform 0.25s ease;
+}
+
+.rotate {
+  transform: rotate(90deg);
+}

@@ -1,0 +1,265 @@
+/* PAGE */
+.home {
+  background: #faf7f4;
+  padding-bottom: 30px;
+}
+
+/* ================= SEARCH BAR ================= */
+.hero-search {
+  padding: 12px 16px;
+}
+
+.hero-search input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e6e1dc;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+/* ================= HERO ================= */
+.hero {
+  position: relative;
+  margin: 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f3ebe5;
+}
+
+.hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-content {
+  position: absolute;
+  inset: 0;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-content h1 {
+  font-family: "Playfair Display", serif;
+  font-size: 28px;
+  line-height: 1.2;
+  color: #3b2a2a;
+  margin-bottom: 10px;
+}
+
+.hero-content p {
+  font-size: 14px;
+  color: #6b5a50;
+  margin-bottom: 16px;
+}
+
+.hero-content button {
+  background: #c59898;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+/* ================= OUR STORY BANNER ================= */
+
+.story-banner {
+  position: relative;
+  margin: 28px 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 220px;
+}
+
+.story-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* OVERLAY */
+.story-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 247, 244, 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.story-overlay h2 {
+  font-family: "Playfair Display", serif;
+  font-size: 22px;
+  color: #3b2a2a;
+  margin-bottom: 8px;
+}
+
+.story-overlay p {
+  font-size: 14px;
+  color: #6b5a50;
+  margin-bottom: 16px;
+}
+
+.story-overlay button {
+  background: #c59898;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* DESKTOP */
+@media (min-width: 768px) {
+  .story-banner {
+    margin: 40px 40px;
+    height: 300px;
+  }
+
+  .story-overlay h2 {
+    font-size: 32px;
+  }
+
+  .story-overlay p {
+    font-size: 16px;
+  }
+}
+.hero-search{
+  position:relative;
+  max-width:520px;
+  margin:5px auto;
+}
+
+.hero-search input{
+  width:100%;
+  padding:14px 18px;
+  border-radius:30px;
+  border:1px solid #ddd;
+}
+
+.search-dropdown{
+  position:absolute;
+  width:100%;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.15);
+  margin-top:8px;
+  overflow:hidden;
+  z-index:999;
+}
+
+.search-item{
+  display:flex;
+  gap:12px;
+  padding:10px;
+  cursor:pointer;
+}
+
+.search-item:hover{background:#f6f6f6;}
+
+.search-item img{
+  width:50px;
+  height:60px;
+  object-fit:cover;
+  border-radius:8px;
+}
+/* ================= SEARCH BAR ================= */
+.hero-search{
+  position:relative;
+  max-width:520px;
+  margin:28px auto;
+  z-index:50;
+}
+
+.hero-search input{
+  width:100%;
+  padding:14px 20px;
+  border-radius:32px;
+  border:1px solid #ddd;
+  font-size:15px;
+  outline:none;
+  transition:.25s;
+}
+
+.hero-search input:focus{
+  border-color:#000;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+
+/* ================= DROPDOWN ================= */
+.search-dropdown{
+  position:absolute;
+  top:110%;
+  left:0;
+  width:100%;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 18px 40px rgba(0,0,0,.18);
+  overflow:hidden;
+  animation:fadeSlide .18s ease;
+}
+
+/* animation */
+@keyframes fadeSlide{
+  from{
+    opacity:0;
+    transform:translateY(-8px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* ITEM */
+.search-item{
+  display:flex;
+  gap:14px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:.18s;
+  align-items:center;
+}
+
+.search-item:hover{
+  background:#f6f6f6;
+}
+
+/* IMAGE */
+.search-item img{
+  width:54px;
+  height:66px;
+  object-fit:cover;
+  border-radius:10px;
+  border:1px solid #eee;
+}
+
+/* TEXT */
+.search-info p{
+  margin:0;
+  font-size:14px;
+  font-weight:500;
+}
+
+.search-info span{
+  font-size:13px;
+  color:#666;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .hero-search{
+    padding:0 14px;
+  }
+}

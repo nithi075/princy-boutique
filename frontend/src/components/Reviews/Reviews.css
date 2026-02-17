@@ -1,0 +1,189 @@
+.reviews-section {
+  padding: 55px 20px 60px;
+  background: linear-gradient(to bottom, #fdf8f6, #f7ecef);
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* HEADER */
+.reviews-header p {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #b48c8c;
+  margin-bottom: 8px;
+}
+
+.reviews-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: #4a3f3f;
+  margin-bottom: 35px;
+}
+
+/* SLIDER */
+.reviews-slider {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 10px 5px 25px;
+  scroll-behavior: smooth;
+}
+
+.reviews-slider::-webkit-scrollbar {
+  height: 6px;
+}
+
+.reviews-slider::-webkit-scrollbar-thumb {
+  background: #e0c3c3;
+  border-radius: 20px;
+}
+
+/* CARD */
+.review-card {
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  background: #ffffff;
+  padding: 26px 20px;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+  transition: 0.3s ease;
+  border: 1px solid #f1e4e4;
+}
+
+.review-card:hover {
+  transform: translateY(-6px);
+}
+
+.review-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  margin-bottom: 6px;
+  color: #4a3f3f;
+}
+
+.review-card p {
+  font-size: 13px;
+  color: #7a6e6e;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+.stars {
+  color: #d6a46d;
+  font-size: 16px;
+}
+
+/* TOGGLE BUTTON — BRAND COLOR */
+.review-toggle {
+  margin-top: 25px;
+  margin-bottom: 10px;
+}
+
+.toggle-btn {
+  background: #c59898;
+  color: white;
+  border: none;
+  padding: 11px 26px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: 0.3s;
+  box-shadow: 0 6px 16px rgba(197,152,152,0.35);
+}
+
+.toggle-btn:hover {
+  background: #b17d7d;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(177,125,125,0.45);
+}
+
+/* DROPDOWN FORM */
+.write-review {
+  max-width: 600px;
+  margin: auto;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.45s ease;
+  padding: 0 30px;
+}
+
+.write-review.open {
+  margin-top: 30px;
+  padding: 30px;
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #f0e2e2;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.06);
+}
+
+.write-review h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  margin-bottom: 18px;
+  color: #4a3f3f;
+}
+
+.name-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.name-input:focus {
+  border-color: #c59898;
+  outline: none;
+}
+
+.star-input {
+  margin-bottom: 15px;
+}
+
+.star {
+  font-size: 22px;
+  cursor: pointer;
+  margin: 0 4px;
+}
+
+textarea {
+  width: 100%;
+  height: 90px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  margin-bottom: 15px;
+  font-size: 13px;
+  resize: none;
+}
+
+textarea:focus {
+  border-color: #c59898;
+  outline: none;
+}
+
+button {
+  background: linear-gradient(135deg,#c59898,#b17d7d);
+  color: white;
+  padding: 12px 28px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.3s;
+  box-shadow: 0 8px 20px rgba(181,125,125,0.3);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(181,125,125,0.4);
+}

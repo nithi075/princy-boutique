@@ -1,0 +1,149 @@
+.footer {
+  background: #f8f5f2;
+  padding: 50px 20px 20px;
+  
+  font-family: "Inter", sans-serif;
+  color: #555;
+}
+
+/* TOP GRID */
+.footer-top {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.footer-col h4 {
+  font-size: 14px;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.footer-logo {
+  font-family: "Playfair Display", serif;
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: #bc9483;
+}
+
+.footer-col p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-col ul li {
+  font-size: 13px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.footer-col ul li:hover {
+  color: #bc9483;
+}
+
+/* NEWSLETTER */
+.newsletter {
+  display: flex;
+  margin-top: 10px;
+}
+
+.newsletter input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px 0 0 6px;
+  outline: none;
+}
+
+.newsletter button {
+  background: #bc9483;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+}
+
+/* SOCIAL */
+.social-icons {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+  font-size: 18px;
+  color: #bc9483;
+  cursor: pointer;
+}
+
+/* BOTTOM */
+.footer-bottom {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 12px;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 15px;
+  color: #777;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .footer-top {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+  }
+}
+/* PHONE INPUT */
+.phone-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.country {
+  padding: 8px 10px;
+  background: #f3f3f3;
+  font-size: 13px;
+}
+
+.phone-box input {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+}
+
+/* BUTTON */
+.footer-btn {
+  width: 100%;
+  padding: 8px;
+  background: #c59898;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.footer-btn:hover {
+  background: #a77f6f;
+}
