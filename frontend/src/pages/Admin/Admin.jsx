@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import "./Admin.css";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 export default function Admin() {
   const [products, setProducts] = useState([]);

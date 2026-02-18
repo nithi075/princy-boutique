@@ -3,7 +3,7 @@ import "./Cart.css";
 import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 export default function Cart() {
 

@@ -4,7 +4,7 @@ import { FiHeart, FiShare2 } from "react-icons/fi";
 import API from "../../api/axios";
 import "./productDetails.css";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 const ProductDetails = () => {
   const { id } = useParams();

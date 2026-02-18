@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import "./FeaturedProducts.css";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 export default function FeaturedProducts() {
 
