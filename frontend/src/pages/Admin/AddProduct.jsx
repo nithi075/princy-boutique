@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import "./addProduct.css";
 
@@ -8,7 +8,7 @@ export default function AddProduct() {
     name: "",
     category: "",
     price: "",
-    description: "",   // ⭐ NEW
+    description: "",
     fabric: "",
     work: "",
     occasion: "",
@@ -21,6 +21,11 @@ export default function AddProduct() {
   const [colors, setColors] = useState([]);
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
+
+  /* CLEAN MEMORY (important) */
+  useEffect(() => {
+    return () => preview.forEach(url => URL.revokeObjectURL(url));
+  }, [preview]);
 
   /* OPTIONS */
   const categories = ["Saree","Kurti","Gown","Night Dress","Nighty"];
@@ -52,18 +57,14 @@ export default function AddProduct() {
   /* SIZE */
   const toggleSize = (size) => {
     setSizes(prev =>
-      prev.includes(size)
-        ? prev.filter(s => s !== size)
-        : [...prev, size]
+      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
     );
   };
 
   /* COLOR */
   const toggleColor = (color) => {
     setColors(prev =>
-      prev.includes(color)
-        ? prev.filter(c => c !== color)
-        : [...prev, color]
+      prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]
     );
   };
 
@@ -81,6 +82,7 @@ export default function AddProduct() {
   };
 
   const removeImage = (i) => {
+    URL.revokeObjectURL(preview[i]);
     setImages(prev => prev.filter((_, index)=> index !== i));
     setPreview(prev => prev.filter((_, index)=> index !== i));
   };
@@ -102,7 +104,7 @@ export default function AddProduct() {
     const formData = new FormData();
 
     Object.keys(form).forEach(key => {
-      formData.append(key, form[key]);   // description included automatically
+      formData.append(key, form[key]);
     });
 
     formData.append("sizes", JSON.stringify(sizes));
@@ -110,9 +112,8 @@ export default function AddProduct() {
     images.forEach(img => formData.append("images", img));
 
     try {
-      await API.post("/products", formData,{
-        headers:{"Content-Type":"multipart/form-data"}
-      });
+      // ❌ DO NOT SET CONTENT-TYPE
+      await API.post("/products", formData);
 
       alert("Product Added 🎉");
 
@@ -120,7 +121,7 @@ export default function AddProduct() {
         name: "",
         category: "",
         price: "",
-        description: "",   // reset
+        description: "",
         fabric: "",
         work: "",
         occasion: "",
@@ -134,7 +135,8 @@ export default function AddProduct() {
       setImages([]);
       setPreview([]);
 
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert("Upload failed");
     }
   };
@@ -156,10 +158,9 @@ export default function AddProduct() {
         <input type="number" name="price" placeholder="Price ₹"
           value={form.price} onChange={handleChange} required />
 
-        {/* ⭐ DESCRIPTION */}
         <textarea
           name="description"
-          placeholder="Product Description (Fabric, work, styling details...)"
+          placeholder="Product Description"
           value={form.description}
           onChange={handleChange}
         />
@@ -184,22 +185,19 @@ export default function AddProduct() {
           {fits.map(f => <option key={f}>{f}</option>)}
         </select>
 
-        {/* SIZE */}
-        {form.category !== "Saree" ? (
-          <div className="size-box">
-            {["XS","S","M","L","XL","Free"].map(size => (
-              <button type="button" key={size}
-                className={sizes.includes(size) ? "active" : ""}
-                onClick={() => toggleSize(size)}>
-                {size}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="free-size-label">Free Size (Saree Default)</p>
-        )}
+        <div className="size-box">
+          {form.category !== "Saree"
+            ? ["XS","S","M","L","XL","Free"].map(size => (
+                <button type="button" key={size}
+                  className={sizes.includes(size) ? "active" : ""}
+                  onClick={() => toggleSize(size)}>
+                  {size}
+                </button>
+              ))
+            : <p className="free-size-label">Free Size (Saree Default)</p>
+          }
+        </div>
 
-        {/* COLOR */}
         <div className="color-box">
           {colorOptions.map(color => (
             <button type="button" key={color}

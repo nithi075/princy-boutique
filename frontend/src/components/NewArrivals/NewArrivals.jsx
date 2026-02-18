@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import "./NewArrivals.css";
 
-const BASE_URL = "https://princy-boutique-backend.onrender.com";
-
 const formatPrice = (price) =>
   "₹" + new Intl.NumberFormat("en-IN").format(price);
 
@@ -20,7 +18,7 @@ export default function NewArrivals() {
   const [added, setAdded] = useState({});
   const [loading, setLoading] = useState(true);
 
-  /* ================= LOAD PRODUCTS (PUBLIC) ================= */
+  /* ================= LOAD PRODUCTS ================= */
   useEffect(() => {
 
     const loadProducts = async () => {
@@ -37,14 +35,13 @@ export default function NewArrivals() {
       }
     };
 
-    /* LOAD WISHLIST (ONLY IF LOGGED IN) */
     const loadWishlist = async () => {
       try {
         const wish = await API.get("/wishlist");
         setWishlistItems(wish.data || []);
         setWishlist((wish.data || []).map(i => i.productId._id));
       } catch {
-        // guest user → ignore
+        // guest user
       }
     };
 
@@ -109,9 +106,9 @@ export default function NewArrivals() {
 
             : products.map(item => {
 
-                const imageUrl = item.images?.length
-                  ? `${BASE_URL}${item.images[0]}`
-                  : "https://via.placeholder.com/300x400?text=No+Image";
+                // ✅ Cloudinary images already full URL
+                const imageUrl = item.images?.[0]
+                  || "https://via.placeholder.com/300x400?text=No+Image";
 
                 return (
                   <div

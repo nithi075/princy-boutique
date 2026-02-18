@@ -1,11 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Product.css";
 import { FiHeart, FiFilter, FiX, FiPlus } from "react-icons/fi";
 import API from "../../api/axios";
-
-const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 export default function Product() {
 
@@ -145,124 +142,12 @@ return (
 <div className="product-page">
 <div className="shop-container">
 
-<header className="shop-header">
-<div className="header-text">
-<h1 className="page-title">The Signature Collection</h1>
-<p className="page-sub">Timeless elegance meets contemporary craft.</p>
-</div>
-
-<button className="filter-btn" onClick={() => setShowFilter(true)}>
-<FiFilter /> Filters
-</button>
-</header>
-
-<div className={`overlay ${showFilter ? "active" : ""}`} onClick={() => setShowFilter(false)} />
-
-{/* FILTER DRAWER */}
-<div className={`filter-drawer ${showFilter ? "open" : ""}`}>
-
-<div className="drawer-header">
-<h3>Filters</h3>
-<FiX style={{cursor:"pointer"}} onClick={()=>setShowFilter(false)}/>
-</div>
-
-<div className="filter-drawer-content">
-
-<div className="filter-section">
-<h4>Category</h4>
-{categories.map(c=>(
-<label key={c}>
-<input type="checkbox" checked={category.includes(c)} onChange={()=>toggleMulti(setCategory,category,c)} />
-{c}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Price</h4>
-{prices.map(p=>(
-<label key={p}>
-<input type="checkbox" checked={priceRange.includes(p)} onChange={()=>toggleMulti(setPriceRange,priceRange,p)} />
-₹ {p}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Color</h4>
-<div className="color-row">
-{colors.map(c=>(
-<div key={c} className={`color ${color===c?"active":""}`} style={{background:c.toLowerCase()}} onClick={()=>setColor(color===c?null:c)} />
-))}
-</div>
-</div>
-
-<div className="filter-section">
-<h4>Size</h4>
-<div className="size-row">
-{sizes.map(s=>(
-<span key={s} className={size===s?"active":""} onClick={()=>setSize(size===s?null:s)}>
-{s}
-</span>
-))}
-</div>
-</div>
-
-<div className="filter-section">
-<h4>Fabric</h4>
-{fabrics.map(f=>(
-<label key={f}>
-<input type="checkbox" checked={fabric.includes(f)} onChange={()=>toggleMulti(setFabric,fabric,f)} />
-{f}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Work</h4>
-{works.map(w=>(
-<label key={w}>
-<input type="checkbox" checked={work.includes(w)} onChange={()=>toggleMulti(setWork,work,w)} />
-{w}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Occasion</h4>
-{occasions.map(o=>(
-<label key={o}>
-<input type="checkbox" checked={occasion.includes(o)} onChange={()=>toggleMulti(setOccasion,occasion,o)} />
-{o}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Fit</h4>
-{fits.map(f=>(
-<label key={f}>
-<input type="checkbox" checked={fit.includes(f)} onChange={()=>toggleMulti(setFit,fit,f)} />
-{f}
-</label>
-))}
-</div>
-
-</div>
-
-<div className="filter-actions">
-<button className="clear-btn" onClick={clearFilters}>Clear</button>
-<button className="apply-btn" onClick={()=>setShowFilter(false)}>Apply</button>
-</div>
-
-</div>
-
 {/* PRODUCTS GRID */}
 <div className="product-grid">
 {products.map(item => {
 
-const imageUrl = item.images?.length
-? `${BASE_URL}${item.images[0]}`
+const imageUrl = item.images?.[0]
+? item.images[0]
 : "https://via.placeholder.com/300x400?text=No+Image";
 
 return (
@@ -294,29 +179,7 @@ onClick={(e)=>{e.stopPropagation();addToCart(item._id);}}>
 })}
 </div>
 
-{/* PAGINATION */}
-{totalPages > 1 && (
-<div className="pagination">
-
-<button className="page-btn" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
-Prev
-</button>
-
-{[...Array(totalPages)].map((_, i) => (
-<button key={i} className={`page-number ${currentPage === i + 1 ? "active" : ""}`} onClick={() => goToPage(i + 1)}>
-{i + 1}
-</button>
-))}
-
-<button className="page-btn" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
-Next
-</button>
-
-</div>
-)}
-
 </div>
 </div>
 );
 }
-

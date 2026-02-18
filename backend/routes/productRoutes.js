@@ -12,14 +12,32 @@ import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
-/* SEARCH MUST COME FIRST */
+/* ================= SEARCH ================= */
 router.get("/search", searchProducts);
 
+/* ================= GET ================= */
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
-router.post("/", upload.array("images", 5), createProduct);
-router.put("/:id", upload.array("images", 5), updateProduct);
+/* ================= CREATE =================
+   Cloudinary upload (max 5 images)
+*/
+router.post(
+  "/",
+  upload.array("images", 5),
+  createProduct
+);
+
+/* ================= UPDATE =================
+   If images sent -> replace old images
+*/
+router.put(
+  "/:id",
+  upload.array("images", 5),
+  updateProduct
+);
+
+/* ================= DELETE ================= */
 router.delete("/:id", deleteProduct);
 
 export default router;

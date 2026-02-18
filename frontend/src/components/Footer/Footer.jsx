@@ -1,5 +1,6 @@
 import "./Footer.css";
 import { FiInstagram, FiFacebook, FiTwitter } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -22,15 +23,12 @@ export default function Footer() {
         <div className="footer-col">
           <h4>Quick Links</h4>
           <ul>
-            <li>Home</li>
-            <li>New Arrivals</li>
-            <li>Collections</li>
-            <li>Contact</li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/new-arrivals">New Arrivals</Link></li>
+            <li><Link to="/admin/add-product">Collections</Link></li>
+            <li><Link to="/contact">Contact</Link></li>
           </ul>
         </div>
-
-        {/* CUSTOMER */}
-       
 
         {/* PHONE LOGIN / SUBSCRIBE */}
         <div className="footer-col">

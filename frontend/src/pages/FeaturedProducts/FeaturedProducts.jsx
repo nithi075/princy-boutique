@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import "./FeaturedProducts.css";
 
-const BASE_URL = "https://princy-boutique-backend.onrender.com";
-
 export default function FeaturedProducts() {
 
   const navigate = useNavigate();
@@ -16,10 +14,9 @@ export default function FeaturedProducts() {
     const fetchFeatured = async () => {
       try {
         const res = await API.get("/products", {
-          params: { featured: true, limit: 8 } // optional filter from backend
+          params: { featured: true, limit: 8 }
         });
 
-        // SAME STRUCTURE AS SHOP PAGE
         const allProducts = res.data.products || [];
 
         const featuredOnly = allProducts.filter(
@@ -69,9 +66,10 @@ export default function FeaturedProducts() {
         ) : (
           products.map(item => {
 
-            const imageUrl = item.images?.length
-              ? `${BASE_URL}${item.images[0]}`
-              : "https://via.placeholder.com/300x400?text=No+Image";
+            // ✅ Cloudinary image (already full URL)
+            const imageUrl =
+              item.images?.[0] ||
+              "https://via.placeholder.com/300x400?text=No+Image";
 
             return (
               <div

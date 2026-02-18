@@ -3,8 +3,6 @@ import "./Cart.css";
 import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "https://princy-boutique-backend.onrender.com";
-
 export default function Cart() {
 
   const [cartItems, setCartItems] = useState([]);
@@ -53,11 +51,10 @@ export default function Cart() {
       acc + item.quantity * (item.productId?.price || 0),
     0
   );
-const goToCheckout = () => {
-  navigate("/checkout");
-};
 
-
+  const goToCheckout = () => {
+    navigate("/checkout");
+  };
 
   return (
     <div className="cart-wrapper">
@@ -77,9 +74,10 @@ const goToCheckout = () => {
 
             const product = item.productId;
 
-            const imageUrl = product?.images?.length
-              ? `${BASE_URL}${product.images[0]}`
-              : "https://via.placeholder.com/200x250?text=No+Image";
+            // ✅ Cloudinary image (already full URL)
+            const imageUrl =
+              product?.images?.[0] ||
+              "https://via.placeholder.com/200x250?text=No+Image";
 
             return (
               <div className="cart-item" key={item._id}>
@@ -141,10 +139,9 @@ const goToCheckout = () => {
             <span>₹{subtotal.toLocaleString()}</span>
           </div>
 
-      <button className="checkout" onClick={goToCheckout}>
-        Proceed to Checkout
-      </button>
-
+          <button className="checkout" onClick={goToCheckout}>
+            Proceed to Checkout
+          </button>
 
           <p className="secure">
             Secure checkout. Shopping is always safe and secure.

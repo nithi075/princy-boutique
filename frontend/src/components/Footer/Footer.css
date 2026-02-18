@@ -147,3 +147,11 @@
 .footer-btn:hover {
   background: #a77f6f;
 }
+.footer-col ul li a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.footer-col ul li a:hover {
+  color: #d4af37;
+}

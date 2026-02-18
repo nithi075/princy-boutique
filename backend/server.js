@@ -53,10 +53,11 @@ const startServer = async () => {
 
     /* ------------------------------------------------------ */
 
-    app.use(express.json());
+ app.use(express.json());
+ app.use(express.urlencoded({ extended: true }));
+
 
     /* STATIC IMAGE FOLDER */
-    app.use("/uploads", express.static("uploads"));
 
     /* ROUTES */
     app.use("/api/auth", authRoutes);

@@ -4,8 +4,6 @@ import { FiHeart, FiShare2 } from "react-icons/fi";
 import API from "../../api/axios";
 import "./productDetails.css";
 
-const BASE_URL = "https://princy-boutique-backend.onrender.com";
-
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,17 +19,17 @@ const ProductDetails = () => {
   useEffect(() => {
     const loadProduct = async () => {
       try {
-        /* PRODUCT */
         const res = await API.get(`/products/${id}`);
         const prod = res.data;
 
         setProduct(prod);
         setSelectedSize(prod.sizes?.[0] || "");
 
+        // Cloudinary image direct
         if (prod.images?.length)
-          setMainImage(`${BASE_URL}${prod.images[0]}`);
+          setMainImage(prod.images[0]);
 
-        /* RELATED PRODUCTS (CATEGORY BASED) */
+        /* RELATED PRODUCTS */
         const all = await API.get("/products");
 
         const relatedProducts = all.data.products
@@ -48,9 +46,7 @@ const ProductDetails = () => {
             setWishlist(true);
             setWishlistItemId(found._id);
           }
-        } catch {
-          // user not logged in
-        }
+        } catch {}
 
       } catch (err) {
         console.log(err.message);
@@ -124,18 +120,15 @@ const ProductDetails = () => {
             </div>
 
             <div className="thumbnail-overlay">
-              {product.images?.map((img, i) => {
-                const full = `${BASE_URL}${img}`;
-                return (
-                  <div
-                    key={i}
-                    className={`thumb-wrapper ${mainImage === full ? "active-thumb" : ""}`}
-                    onClick={() => setMainImage(full)}
-                  >
-                    <img src={full} alt="thumb" />
-                  </div>
-                );
-              })}
+              {product.images?.map((img, i) => (
+                <div
+                  key={i}
+                  className={`thumb-wrapper ${mainImage === img ? "active-thumb" : ""}`}
+                  onClick={() => setMainImage(img)}
+                >
+                  <img src={img} alt="thumb" />
+                </div>
+              ))}
             </div>
 
           </div>
@@ -211,7 +204,7 @@ const ProductDetails = () => {
               >
                 <div className="card-img-container">
                   <img
-                    src={`${BASE_URL}${item.images?.[0]}`}
+                    src={item.images?.[0] || "https://via.placeholder.com/300x400?text=No+Image"}
                     alt={item.name}
                   />
                 </div>
