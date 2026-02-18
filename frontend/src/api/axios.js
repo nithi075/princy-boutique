@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://princy-boutique-backend.onrender.com",
+  baseURL: "https://princy-boutique-backend.onrender.com/api",
+  withCredentials: true,
 });
 
 // Attach token automatically
