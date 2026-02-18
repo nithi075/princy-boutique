@@ -58,13 +58,56 @@ export const getProducts = async (req, res) => {
 };
 
 /* =========================================================
-   CREATE PRODUCT (FIXED CLOUDINARY UPLOAD)
+   SEARCH PRODUCTS
+   ========================================================= */
+export const searchProducts = async (req, res) => {
+  try {
+    const q = req.query.q?.trim();
+    if (!q || q.length < 2) return res.json([]);
+
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { category: { $regex: q, $options: "i" } },
+        { fabric: { $regex: q, $options: "i" } },
+        { work: { $regex: q, $options: "i" } },
+        { occasion: { $regex: q, $options: "i" } },
+        { fit: { $regex: q, $options: "i" } }
+      ]
+    })
+      .select("name price images")
+      .limit(8);
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* =========================================================
+   GET SINGLE PRODUCT
+   ========================================================= */
+export const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* =========================================================
+   CREATE PRODUCT (CLOUDINARY STREAM UPLOAD)
    ========================================================= */
 export const createProduct = async (req, res) => {
   try {
     const uploadedImages = [];
 
-    for (const file of req.files) {
+    for (const file of req.files || []) {
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: "princy-boutique/products" },
@@ -73,7 +116,6 @@ export const createProduct = async (req, res) => {
             else resolve(result);
           }
         );
-
         streamifier.createReadStream(file.buffer).pipe(stream);
       });
 
@@ -120,7 +162,6 @@ export const updateProduct = async (req, res) => {
               else resolve(result);
             }
           );
-
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
 
