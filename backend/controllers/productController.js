@@ -47,7 +47,11 @@ export const getProducts = async (req, res) => {
     if (work) filter.work = { $in: work.split(",").map(v => decodeURIComponent(v.trim())) };
     if (occasion) filter.occasion = { $in: occasion.split(",").map(v => decodeURIComponent(v.trim())) };
     if (fit) filter.fit = { $in: fit.split(",").map(v => decodeURIComponent(v.trim())) };
-    if (featured) filter.featured = true;
+
+    /* ⭐ FIXED FEATURED FILTER (IMPORTANT) */
+    if (featured !== undefined) {
+      filter.featured = featured === "true";
+    }
 
     /* ================= PRICE FILTER ================= */
     if (price) {

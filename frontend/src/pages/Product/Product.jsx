@@ -5,7 +5,7 @@ import "./Product.css";
 import { FiHeart, FiFilter, FiX, FiPlus } from "react-icons/fi";
 import API from "../../api/axios";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 export default function Product() {
 
