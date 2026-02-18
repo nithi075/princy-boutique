@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import "./NewArrivals.css";
 
-const BASE_URL = "https://princy-boutique-backend.onrender.com/api";
+const BASE_URL = "https://princy-boutique-backend.onrender.com";
 
 const formatPrice = (price) =>
   "₹" + new Intl.NumberFormat("en-IN").format(price);
