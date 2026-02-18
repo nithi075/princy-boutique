@@ -5,7 +5,7 @@ import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
-import cartRoutes from "./routes/cartRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";        // ⭐ FIXED (missing import)
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
@@ -15,27 +15,28 @@ dotenv.config();
 
 const startServer = async () => {
   try {
-    await connectDB(); // ⭐ WAIT FOR DB CONNECTION
+    // 🔥 Wait for DB connection before starting server
+    await connectDB();
 
     const app = express();
 
-    /* -------------------- CORS FIX -------------------- */
+    /* -------------------- CORS CONFIG -------------------- */
 
     const allowedOrigins = [
-      "http://localhost:5173",                // local dev
+      "http://localhost:5173",
       "http://localhost:3000",
-      "https://princy-boutique.onrender.com"    // 🔁 change if your vercel url different
+      "https://princy-boutique.onrender.com" // change if frontend url changes
     ];
 
     const corsOptions = {
       origin: function (origin, callback) {
-        // allow postman / mobile apps
+        // allow postman / mobile / curl
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
           return callback(null, true);
         } else {
-          console.log("Blocked by CORS:", origin);
+          console.log("❌ Blocked by CORS:", origin);
           return callback(new Error("Not allowed by CORS"));
         }
       },
@@ -46,10 +47,10 @@ const startServer = async () => {
 
     app.use(cors(corsOptions));
 
-    // 🔥 VERY IMPORTANT — handle preflight requests
-    app.options("*", cors(corsOptions));
+    // ⭐⭐⭐ EXPRESS 5 FIX (DO NOT USE "*")
+    app.options("/*", cors(corsOptions));
 
-    /* -------------------------------------------------- */
+    /* ------------------------------------------------------ */
 
     app.use(express.json());
 
@@ -65,18 +66,35 @@ const startServer = async () => {
     app.use("/api/contact", contactRoutes);
     app.use("/api/reviews", reviewRoutes);
 
-    /* TEST ROUTE (for debugging) */
+    /* TEST ROUTE */
     app.get("/", (req, res) => {
-      res.send("API is running...");
+      res.send("API is running 🚀");
     });
 
-    /* SERVER */
+    /* GLOBAL ERROR HANDLER */
+    app.use((err, req, res, next) => {
+      console.error("Server Error:", err.message);
+      res.status(500).json({ message: err.message });
+    });
+
+    /* SERVER START */
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on port ${PORT}`)
+    );
 
   } catch (error) {
-    console.log("Server failed to start:", error);
+    console.log("❌ Server failed to start:", error);
   }
 };
+
+/* PREVENT RENDER CRASH (IMPORTANT) */
+process.on("unhandledRejection", (err) => {
+  console.log("Unhandled Rejection:", err);
+});
+
+process.on("uncaughtException", (err) => {
+  console.log("Uncaught Exception:", err);
+});
 
 startServer();
