@@ -1,5 +1,5 @@
 import React from "react";
-import "./Categories.css";
+import "./categories.css";
 import { useNavigate } from "react-router-dom";
 
 /* IMAGES */
