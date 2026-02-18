@@ -1,6 +1,5 @@
 import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
-import streamifier from "streamifier";
 
 /* =========================================================
    GET PRODUCTS
@@ -8,7 +7,7 @@ import streamifier from "streamifier";
 export const getProducts = async (req, res) => {
   try {
     const {
-      page, limit, category, exclude, price,
+      page, limit, category, exclude,
       color, size, fabric, work, occasion, fit, featured
     } = req.query;
 
@@ -53,6 +52,7 @@ export const getProducts = async (req, res) => {
     res.json({ products, totalProducts, totalPages: 1 });
 
   } catch (err) {
+    console.error("GET PRODUCTS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -80,6 +80,7 @@ export const searchProducts = async (req, res) => {
 
     res.json(products);
   } catch (err) {
+    console.error("SEARCH ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -90,37 +91,28 @@ export const searchProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
     if (!product)
       return res.status(404).json({ message: "Product not found" });
 
     res.json(product);
   } catch (err) {
+    console.error("GET PRODUCT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
 
 /* =========================================================
-   CREATE PRODUCT (CLOUDINARY STREAM UPLOAD)
+   CREATE PRODUCT (CLOUDINARY STORAGE VERSION)
    ========================================================= */
 export const createProduct = async (req, res) => {
-  try { 
-    const uploadedImages = [];
+  try {
 
-    for (const file of req.files || []) {
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "princy-boutique/products" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        streamifier.createReadStream(file.buffer).pipe(stream);
-      });
-
-      uploadedImages.push(result.secure_url);
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "Please upload images" });
     }
+
+    // multer-storage-cloudinary already uploaded → just read URLs
+    const imageUrls = req.files.map(file => file.path);
 
     const product = await Product.create({
       ...req.body,
@@ -129,13 +121,13 @@ export const createProduct = async (req, res) => {
       featured: req.body.featured === "true",
       sizes: JSON.parse(req.body.sizes || "[]"),
       colors: JSON.parse(req.body.colors || "[]"),
-      images: uploadedImages
+      images: imageUrls
     });
 
     res.status(201).json(product);
 
   } catch (err) {
-    console.error("UPLOAD ERROR:", err);
+    console.error("CREATE PRODUCT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -146,46 +138,42 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const existingProduct = await Product.findById(req.params.id);
-    if (!existingProduct) return res.status(404).json({ message: "Product not found" });
+    if (!existingProduct)
+      return res.status(404).json({ message: "Product not found" });
 
-    let newImages = existingProduct.images;
+    let images = existingProduct.images;
 
-    if (req.files?.length) {
-      newImages = [];
+    if (req.files && req.files.length > 0) {
 
-      for (const file of req.files) {
-        const result = await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            { folder: "princy-boutique/products" },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          streamifier.createReadStream(file.buffer).pipe(stream);
-        });
-
-        newImages.push(result.secure_url);
+      // delete old cloudinary images
+      for (const img of existingProduct.images) {
+        try {
+          const publicId = img.split("/").slice(-2).join("/").split(".")[0];
+          await cloudinary.uploader.destroy(publicId);
+        } catch {}
       }
+
+      images = req.files.map(file => file.path);
     }
 
-    const product = await Product.findByIdAndUpdate(
+    const updated = await Product.findByIdAndUpdate(
       req.params.id,
       {
         ...req.body,
         price: Number(req.body.price),
-        sizes: req.body.sizes ? JSON.parse(req.body.sizes) : existingProduct.sizes,
-        colors: req.body.colors ? JSON.parse(req.body.colors) : existingProduct.colors,
         readyMade: req.body.readyMade === "true",
         featured: req.body.featured === "true",
-        images: newImages
+        sizes: req.body.sizes ? JSON.parse(req.body.sizes) : existingProduct.sizes,
+        colors: req.body.colors ? JSON.parse(req.body.colors) : existingProduct.colors,
+        images
       },
       { new: true }
     );
 
-    res.json(product);
+    res.json(updated);
 
   } catch (err) {
+    console.error("UPDATE PRODUCT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -195,9 +183,23 @@ export const updateProduct = async (req, res) => {
    ========================================================= */
 export const deleteProduct = async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    // delete cloudinary images
+    for (const img of product.images) {
+      try {
+        const publicId = img.split("/").slice(-2).join("/").split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+      } catch {}
+    }
+
     await Product.findByIdAndDelete(req.params.id);
+
     res.json({ message: "Product deleted successfully" });
+
   } catch (err) {
+    console.error("DELETE PRODUCT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
