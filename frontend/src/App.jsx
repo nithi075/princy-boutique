@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
@@ -15,47 +15,55 @@ import Checkout from "./pages/Checkout/Checkout";
 
 /* ADMIN */
 import AddProduct from "./pages/Admin/AddProduct";
+import Admin from "./pages/Admin/Admin";
 
-function App() {
+
+/* ================= LAYOUT CONTROLLER ================= */
+function Layout() {
+  const location = useLocation();
+
+  // if URL starts with /admin hide public layout
+  const isAdmin = location.pathname.startsWith("/admin");
+
   return (
-    <BrowserRouter>
-
+    <>
       {/* HEADER */}
-      <Header />
+      {!isAdmin && <Header />}
 
       {/* MAIN CONTENT */}
       <main className="main-content">
         <Routes>
 
           {/* ================= USER ROUTES ================= */}
-
           <Route path="/" element={<Home />} />
-
           <Route path="/shop" element={<Product />} />
-
           <Route path="/product/:id" element={<ProductDetails />} />
-
           <Route path="/cart" element={<Cart />} />
-
           <Route path="/wishlist" element={<Wishlist />} />
-
           <Route path="/contact" element={<Contact />} />
-
-            <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout" element={<Checkout />} />
 
           {/* ================= ADMIN ROUTES ================= */}
-
+          <Route path="/admin" element={<Admin />} />
           <Route path="/admin/add-product" element={<AddProduct />} />
 
         </Routes>
       </main>
 
       {/* FOOTER */}
-      <Footer />
+      {!isAdmin && <Footer />}
 
       {/* FLOAT BUTTON */}
-      <WhatsAppFloat />
+      {!isAdmin && <WhatsAppFloat />}
+    </>
+  );
+}
 
+/* ================= APP ROOT ================= */
+function App() {
+  return (
+    <BrowserRouter>
+      <Layout />
     </BrowserRouter>
   );
 }
