@@ -22,7 +22,7 @@ export default function AddProduct() {
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
 
-  /* CLEAN MEMORY (important) */
+  /* CLEAN MEMORY */
   useEffect(() => {
     return () => preview.forEach(url => URL.revokeObjectURL(url));
   }, [preview]);
@@ -101,18 +101,29 @@ export default function AddProduct() {
       return;
     }
 
+    if (images.length === 0) {
+      alert("Please upload at least one image");
+      return;
+    }
+
     const formData = new FormData();
 
+    /* SEND FORM FIELDS SAFELY */
     Object.keys(form).forEach(key => {
-      formData.append(key, form[key]);
+      if (typeof form[key] === "boolean") {
+        formData.append(key, String(form[key])); // important
+      } else {
+        formData.append(key, form[key] ?? "");
+      }
     });
 
-    formData.append("sizes", JSON.stringify(sizes));
-    formData.append("colors", JSON.stringify(colors));
+    /* ALWAYS VALID JSON */
+    formData.append("sizes", JSON.stringify(sizes || []));
+    formData.append("colors", JSON.stringify(colors || []));
+
     images.forEach(img => formData.append("images", img));
 
     try {
-      // ❌ DO NOT SET CONTENT-TYPE
       await API.post("/products", formData);
 
       alert("Product Added 🎉");
@@ -136,8 +147,8 @@ export default function AddProduct() {
       setPreview([]);
 
     } catch (err) {
-      console.error(err);
-      alert("Upload failed");
+      console.error("UPLOAD ERROR:", err?.response?.data || err.message);
+      alert(err?.response?.data?.message || "Upload failed");
     }
   };
 
