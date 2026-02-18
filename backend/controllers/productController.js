@@ -1,5 +1,6 @@
 import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";
 
 /* =========================================================
    GET PRODUCTS
@@ -30,20 +31,6 @@ export const getProducts = async (req, res) => {
     if (fit) filter.fit = { $in: fit.split(",").map(v => decodeURIComponent(v.trim())) };
     if (featured !== undefined) filter.featured = featured === "true";
 
-    if (price) {
-      const ranges = price.split(",");
-      const priceConditions = [];
-
-      ranges.forEach(r => {
-        if (r === "0-2000") priceConditions.push({ price: { $gte: 0, $lte: 2000 } });
-        else if (r === "2000-5000") priceConditions.push({ price: { $gte: 2000, $lte: 5000 } });
-        else if (r === "5000-10000") priceConditions.push({ price: { $gte: 5000, $lte: 10000 } });
-        else if (r === "10000+") priceConditions.push({ price: { $gte: 10000 } });
-      });
-
-      if (priceConditions.length) filter.$and = [{ $or: priceConditions }];
-    }
-
     let query = Product.find(filter).sort({ createdAt: -1 });
     const totalProducts = await Product.countDocuments(filter);
 
@@ -71,56 +58,27 @@ export const getProducts = async (req, res) => {
 };
 
 /* =========================================================
-   SEARCH PRODUCTS
-   ========================================================= */
-export const searchProducts = async (req, res) => {
-  try {
-    const q = req.query.q?.trim();
-    if (!q || q.length < 2) return res.json([]);
-
-    const products = await Product.find({
-      $or: [
-        { name: { $regex: q, $options: "i" } },
-        { category: { $regex: q, $options: "i" } },
-        { fabric: { $regex: q, $options: "i" } },
-        { work: { $regex: q, $options: "i" } },
-        { occasion: { $regex: q, $options: "i" } },
-        { fit: { $regex: q, $options: "i" } }
-      ]
-    })
-      .select("name price images")
-      .limit(8);
-
-    res.json(products);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* =========================================================
-   GET SINGLE PRODUCT
-   ========================================================= */
-export const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product)
-      return res.status(404).json({ message: "Product not found" });
-
-    res.json(product);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* =========================================================
-   CREATE PRODUCT (Cloudinary)
+   CREATE PRODUCT (FIXED CLOUDINARY UPLOAD)
    ========================================================= */
 export const createProduct = async (req, res) => {
   try {
-    const imageUrls = req.files?.map(file => file.path) || [];
+    const uploadedImages = [];
+
+    for (const file of req.files) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "princy-boutique/products" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+
+      uploadedImages.push(result.secure_url);
+    }
 
     const product = await Product.create({
       ...req.body,
@@ -129,12 +87,13 @@ export const createProduct = async (req, res) => {
       featured: req.body.featured === "true",
       sizes: JSON.parse(req.body.sizes || "[]"),
       colors: JSON.parse(req.body.colors || "[]"),
-      images: imageUrls
+      images: uploadedImages
     });
 
     res.status(201).json(product);
 
   } catch (err) {
+    console.error("UPLOAD ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -147,27 +106,42 @@ export const updateProduct = async (req, res) => {
     const existingProduct = await Product.findById(req.params.id);
     if (!existingProduct) return res.status(404).json({ message: "Product not found" });
 
-    const newImages = req.files?.map(file => file.path);
+    let newImages = existingProduct.images;
 
-    // delete old images if new uploaded
-    if (newImages?.length && existingProduct.images?.length) {
-      for (const img of existingProduct.images) {
-        const publicId = img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(`products/${publicId}`);
+    if (req.files?.length) {
+      newImages = [];
+
+      for (const file of req.files) {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "princy-boutique/products" },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+
+        newImages.push(result.secure_url);
       }
     }
 
-    const updatedData = {
-      ...req.body,
-      price: Number(req.body.price),
-      sizes: req.body.sizes ? JSON.parse(req.body.sizes) : existingProduct.sizes,
-      colors: req.body.colors ? JSON.parse(req.body.colors) : existingProduct.colors,
-      readyMade: req.body.readyMade === "true",
-      featured: req.body.featured === "true",
-      images: newImages?.length ? newImages : existingProduct.images
-    };
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        price: Number(req.body.price),
+        sizes: req.body.sizes ? JSON.parse(req.body.sizes) : existingProduct.sizes,
+        colors: req.body.colors ? JSON.parse(req.body.colors) : existingProduct.colors,
+        readyMade: req.body.readyMade === "true",
+        featured: req.body.featured === "true",
+        images: newImages
+      },
+      { new: true }
+    );
 
-    const product = await Product.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     res.json(product);
 
   } catch (err) {
@@ -180,19 +154,8 @@ export const updateProduct = async (req, res) => {
    ========================================================= */
 export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    if (product.images?.length) {
-      for (const img of product.images) {
-        const publicId = img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(`products/${publicId}`);
-      }
-    }
-
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Product deleted successfully" });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
