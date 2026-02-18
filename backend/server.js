@@ -48,7 +48,8 @@ const startServer = async () => {
     app.use(cors(corsOptions));
 
     // ⭐⭐⭐ EXPRESS 5 FIX (DO NOT USE "*")
-    app.options("/*", cors(corsOptions));
+   app.options(/.*/, cors(corsOptions));
+
 
     /* ------------------------------------------------------ */
 
