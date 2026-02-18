@@ -24,7 +24,7 @@ const startServer = async () => {
     const allowedOrigins = [
       "http://localhost:5173",                // local dev
       "http://localhost:3000",
-      "https://princy-boutique.onrender.com/"    // 🔁 change if your vercel url different
+      "https://princy-boutique.onrender.com"    // 🔁 change if your vercel url different
     ];
 
     const corsOptions = {
