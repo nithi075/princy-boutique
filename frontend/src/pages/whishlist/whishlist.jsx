@@ -4,8 +4,6 @@ import "./whishlist.css";
 import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "https://princy-boutique-backend.onrender.com";
-
 export default function Wishlist() {
 
   const [items, setItems] = useState([]);
@@ -73,9 +71,10 @@ export default function Wishlist() {
 
             const product = item.productId;
 
-            const imageUrl = product?.images?.length
-              ? `${BASE_URL}${product.images[0]}`
-              : "https://via.placeholder.com/300x400?text=No+Image";
+            // ✅ Cloudinary image
+            const imageUrl =
+              product?.images?.[0] ||
+              "https://via.placeholder.com/300x400?text=No+Image";
 
             return (
               <div
