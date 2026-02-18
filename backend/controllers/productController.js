@@ -104,7 +104,7 @@ export const getProductById = async (req, res) => {
    CREATE PRODUCT (CLOUDINARY STREAM UPLOAD)
    ========================================================= */
 export const createProduct = async (req, res) => {
-  try {
+  try { 
     const uploadedImages = [];
 
     for (const file of req.files || []) {

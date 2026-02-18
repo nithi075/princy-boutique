@@ -44,21 +44,16 @@ const startServer = async () => {
 
 
     /* ======================================================
-       IMPORTANT: ROUTES THAT USE MULTER FIRST
+       BODY PARSERS FIRST (IMPORTANT FOR MEMORY STORAGE UPLOAD)
        ====================================================== */
-
-    app.use("/api/products", productRoutes);
-
-
-    /* ======================================================
-       BODY PARSERS AFTER MULTER ROUTES
-       ====================================================== */
-
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
 
-    /* OTHER ROUTES */
+    /* ======================================================
+       ROUTES
+       ====================================================== */
+    app.use("/api/products", productRoutes);
     app.use("/api/auth", authRoutes);
     app.use("/api/cart", cartRoutes);
     app.use("/api/wishlist", wishlistRoutes);
@@ -67,12 +62,12 @@ const startServer = async () => {
     app.use("/api/reviews", reviewRoutes);
 
 
-    /* TEST */
+    /* TEST ROUTE */
     app.get("/", (req, res) => {
       res.send("API is running 🚀");
     });
 
-    /* ERROR HANDLER */
+    /* GLOBAL ERROR HANDLER */
     app.use((err, req, res, next) => {
       console.error("Server Error:", err.message);
       res.status(500).json({ message: err.message });
@@ -88,6 +83,7 @@ const startServer = async () => {
   }
 };
 
+/* PREVENT RENDER CRASH */
 process.on("unhandledRejection", (err) => {
   console.log("Unhandled Rejection:", err);
 });
