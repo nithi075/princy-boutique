@@ -1,5 +1,5 @@
 import React from "react";
-import "./Contact.css";
+import "./contact.css";
 import { FiMapPin, FiPhone, FiMail, FiClock } from "react-icons/fi";
 import heroImg from "../../assets/contact-hero.png"; 
 // 👆 use the clean image without text
