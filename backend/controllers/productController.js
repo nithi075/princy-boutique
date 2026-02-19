@@ -23,33 +23,11 @@ GET PRODUCTS
 ========================================================= */
 export const getProducts = async (req, res) => {
 try {
-const {
-page, limit, category, exclude,
-color, size, fabric, work, occasion, fit, featured
-} = req.query;
+const { page, limit } = req.query;
 
 
-let filter = {};
-
-if (category || exclude) {
-  const includeArr = category?.split(",").map(c => decodeURIComponent(c.trim()));
-  const excludeArr = exclude?.split(",").map(c => decodeURIComponent(c.trim()));
-
-  if (includeArr && excludeArr) filter.category = { $in: includeArr, $nin: excludeArr };
-  else if (includeArr) filter.category = { $in: includeArr };
-  else if (excludeArr) filter.category = { $nin: excludeArr };
-}
-
-if (size) filter.sizes = { $in: [decodeURIComponent(size)] };
-if (color) filter.colors = { $in: [decodeURIComponent(color)] };
-if (fabric) filter.fabric = { $in: fabric.split(",").map(v => decodeURIComponent(v.trim())) };
-if (work) filter.work = { $in: work.split(",").map(v => decodeURIComponent(v.trim())) };
-if (occasion) filter.occasion = { $in: occasion.split(",").map(v => decodeURIComponent(v.trim())) };
-if (fit) filter.fit = { $in: fit.split(",").map(v => decodeURIComponent(v.trim())) };
-if (featured !== undefined) filter.featured = featured === "true";
-
-let query = Product.find(filter).sort({ createdAt: -1 });
-const totalProducts = await Product.countDocuments(filter);
+let query = Product.find().sort({ createdAt: -1 });
+const totalProducts = await Product.countDocuments();
 
 if (page && limit) {
   const pageNumber = Number(page);
@@ -74,43 +52,63 @@ res.json({ products, totalProducts, totalPages: 1 });
 console.error("GET PRODUCTS ERROR:", err);
 res.status(500).json({ message: err.message });
 }
-}
-;
-
-
-/* =========================================================
-   GET SINGLE PRODUCT
-   ========================================================= */
-export const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product)
-      return res.status(404).json({ message: "Product not found" });
-
-    res.json(product);
-
-  } catch (err) {
-    console.error("GET PRODUCT ERROR:", err);
-    res.status(500).json({ message: err.message });
-  }
 };
 
+/* =========================================================
+SEARCH PRODUCTS
+========================================================= */
+export const searchProducts = async (req, res) => {
+try {
+const q = req.query.q?.trim();
+if (!q || q.length < 2) return res.json([]);
+
+
+const products = await Product.find({
+  name: { $regex: q, $options: "i" }
+})
+  .select("name price images")
+  .limit(8);
+
+res.json(products);
+
+
+} catch (err) {
+console.error("SEARCH ERROR:", err);
+res.status(500).json({ message: err.message });
+}
+};
 
 /* =========================================================
-CREATE PRODUCT (FIXED CLOUDINARY VERSION)
+GET SINGLE PRODUCT
+========================================================= */
+export const getProductById = async (req, res) => {
+try {
+const product = await Product.findById(req.params.id);
+if (!product)
+return res.status(404).json({ message: "Product not found" });
+
+
+res.json(product);
+
+
+} catch (err) {
+console.error("GET PRODUCT ERROR:", err);
+res.status(500).json({ message: err.message });
+}
+};
+
+/* =========================================================
+CREATE PRODUCT (CLOUDINARY FIXED)
 ========================================================= */
 export const createProduct = async (req, res) => {
 try {
 
 
-if (!req.files || req.files.length === 0) {
+if (!req.files || req.files.length === 0)
   return res.status(400).json({ message: "Please upload images" });
-}
 
 const imageUrls = [];
 
-// Upload each image buffer to Cloudinary
 for (const file of req.files) {
   const url = await uploadToCloudinary(file.buffer);
   imageUrls.push(url);
@@ -149,7 +147,7 @@ let images = existingProduct.images;
 
 if (req.files && req.files.length > 0) {
 
-  // delete old images from cloudinary
+  // delete old images
   for (const img of existingProduct.images) {
     try {
       const publicId = img.split("/").slice(-2).join("/").split(".")[0];
