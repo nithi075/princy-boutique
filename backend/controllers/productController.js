@@ -50,38 +50,88 @@ readable.pipe(stream);
 /* =========================================================
 GET PRODUCTS
 ========================================================= */
+/* =========================================================
+GET PRODUCTS WITH FILTERS (FIXED)
+========================================================= */
 export const getProducts = async (req, res) => {
-try {
-const { page, limit } = req.query;
+  try {
+    const {
+      page = 1,
+      limit = 8,
+      category,
+      fabric,
+      work,
+      occasion,
+      size,
+      color,
+      minPrice,
+      maxPrice
+    } = req.query;
 
+    const filters = {};
 
-let query = Product.find().sort({ createdAt: -1 });
-const totalProducts = await Product.countDocuments();
+    /* CATEGORY */
+    if (category) {
+      filters.category = { $in: category.split(",") };
+    }
 
-if (page && limit) {
-  const pageNumber = Number(page);
-  const limitNumber = Number(limit);
-  const skip = (pageNumber - 1) * limitNumber;
+    /* FABRIC */
+    if (fabric) {
+      filters.fabric = { $in: fabric.split(",") };
+    }
 
-  const products = await query.skip(skip).limit(limitNumber);
+    /* WORK */
+    if (work) {
+      filters.work = { $in: work.split(",") };
+    }
 
-  return res.json({
-    products,
-    currentPage: pageNumber,
-    totalPages: Math.ceil(totalProducts / limitNumber),
-    totalProducts
-  });
-}
+    /* OCCASION */
+    if (occasion) {
+      filters.occasion = { $in: occasion.split(",") };
+    }
 
-const products = await query;
-res.json({ products, totalProducts, totalPages: 1 });
+    /* SIZE (ARRAY FIELD) */
+    if (size) {
+      filters.sizes = { $in: size.split(",") };
+    }
 
+    /* COLOR (ARRAY FIELD) */
+    if (color) {
+      filters.colors = { $in: color.split(",") };
+    }
 
-} catch (err) {
-console.error("GET PRODUCTS ERROR:", err);
-res.status(500).json({ message: err.message });
-}
+    /* PRICE RANGE */
+    if (minPrice || maxPrice) {
+      filters.price = {};
+      if (minPrice) filters.price.$gte = Number(minPrice);
+      if (maxPrice) filters.price.$lte = Number(maxPrice);
+    }
+
+    /* PAGINATION */
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const products = await Product.find(filters)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    const totalProducts = await Product.countDocuments(filters);
+
+    res.json({
+      products,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalProducts / limitNumber),
+      totalProducts
+    });
+
+  } catch (err) {
+    console.error("FILTER ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
 };
+
 
 /* =========================================================
 SEARCH PRODUCTS
