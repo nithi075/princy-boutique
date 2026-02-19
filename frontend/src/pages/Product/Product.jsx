@@ -88,7 +88,11 @@ export default function Product() {
         const wish = await API.get("/wishlist");
         setWishlistItems(wish.data);
         // Convert ObjectIds to strings for stable comparison
-        setWishlist(wish.data.map((i) => i.productId._id.toString()));
+        setWishlist(
+            wish.data
+                .filter(i => i.productId) // ⭐ prevent null crash
+                .map(i => i.productId._id.toString())
+            );
       } catch (err) { console.log("Wishlist error", err); }
     };
     loadWishlist();

@@ -5,8 +5,12 @@ export const getWishlist = async (req, res) => {
   const items = await Wishlist.find({ userId: req.user._id })
     .populate("productId");
 
-  res.json(items);
+  // 🔥 remove deleted products
+  const filtered = items.filter(item => item.productId !== null);
+
+  res.json(filtered);
 };
+
 
 /* ADD TO WISHLIST */
 export const addToWishlist = async (req, res) => {
