@@ -3,6 +3,20 @@ import cloudinary from "../config/cloudinary.js";
 import { Readable } from "stream";
 
 /* =========================================================
+SAFE JSON PARSER (IMPORTANT FIX)
+========================================================= */
+const safeJSON = (value, defaultValue = []) => {
+try {
+if (!value) return defaultValue;
+if (Array.isArray(value)) return value;
+if (typeof value === "object") return Object.values(value);
+return JSON.parse(value);
+} catch {
+return defaultValue;
+}
+};
+
+/* =========================================================
 CLOUDINARY UPLOAD (RENDER SAFE)
 ========================================================= */
 const uploadToCloudinary = (file) => {
@@ -117,53 +131,35 @@ CREATE PRODUCT
 ========================================================= */
 export const createProduct = async (req, res) => {
 try {
-console.log("---- REQUEST START ----");
-console.log("files:", req.files?.length);
-console.log("body:", req.body);
+if (!req.files || req.files.length === 0)
+return res.status(400).json({ message: "Please upload images" });
 
-```
-if (!req.files || req.files.length === 0) {
-  console.log("NO FILES RECEIVED");
-  return res.status(400).json({ message: "No files received" });
-}
 
 const imageUrls = [];
 
 for (const file of req.files) {
-  console.log("FILE SIZE:", file.size);
-
   const url = await uploadToCloudinary(file);
-  console.log("UPLOADED:", url);
-
   imageUrls.push(url);
 }
-
-console.log("CREATING PRODUCT");
 
 const product = await Product.create({
   ...req.body,
   price: Number(req.body.price),
   readyMade: req.body.readyMade === "true",
   featured: req.body.featured === "true",
-  sizes: JSON.parse(req.body.sizes || "[]"),
-  colors: JSON.parse(req.body.colors || "[]"),
+  sizes: safeJSON(req.body.sizes),
+  colors: safeJSON(req.body.colors),
   images: imageUrls
 });
 
-console.log("PRODUCT CREATED");
-
 res.status(201).json(product);
-```
+
 
 } catch (err) {
-console.error("🔥🔥 REAL ERROR:", err);
-res.status(500).json({
-message: err.message,
-stack: err.stack
-});
+console.error("CREATE PRODUCT ERROR:", err);
+res.status(500).json({ message: err.message });
 }
 };
-
 
 /* =========================================================
 UPDATE PRODUCT
@@ -192,8 +188,8 @@ const updated = await Product.findByIdAndUpdate(
     price: Number(req.body.price),
     readyMade: req.body.readyMade === "true",
     featured: req.body.featured === "true",
-    sizes: req.body.sizes ? JSON.parse(req.body.sizes) : existingProduct.sizes,
-    colors: req.body.colors ? JSON.parse(req.body.colors) : existingProduct.colors,
+    sizes: req.body.sizes ? safeJSON(req.body.sizes) : existingProduct.sizes,
+    colors: req.body.colors ? safeJSON(req.body.colors) : existingProduct.colors,
     images
   },
   { new: true }
