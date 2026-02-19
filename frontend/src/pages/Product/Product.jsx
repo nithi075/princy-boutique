@@ -278,7 +278,7 @@ export default function Product() {
               </div>
             ))
           ) : (
-            <div className="no-products">No products found matching these filters.</div>
+            <div className="no-products">Loading...</div>
           )}
         </div>
 
