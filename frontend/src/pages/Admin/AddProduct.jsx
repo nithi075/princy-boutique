@@ -28,7 +28,7 @@ export default function AddProduct() {
   }, [preview]);
 
   /* OPTIONS */
-  const categories = ["Saree","Kurti","Gown","Night Dress","Nighty"];
+  const categories = ["Sharara","Kurti","Gown","Night Dress","Short Kurti"];
   const fabrics = ["Cotton","Silk","Rayon"];
   const works = ["Printed","Embroidered","Minimal","Plain"];
   const occasions = ["Daily Wear","Casual Wear","Festive Wear","Party Wear","Wedding Wear"];
