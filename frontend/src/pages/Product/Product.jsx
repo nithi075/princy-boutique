@@ -12,8 +12,8 @@ export default function Product() {
 
   /* DATA STATES */
   const [products, setProducts] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  const [wishlistItems, setWishlistItems] = useState([]);
+  const [wishlist, setWishlist] = useState([]); // Stores string IDs
+  const [wishlistItems, setWishlistItems] = useState([]); // Stores full objects
 
   /* PAGINATION & FILTERS */
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,7 +55,6 @@ export default function Product() {
     if (size.length) params.size = size.join(",");
     if (color.length) params.color = color.join(",");
 
-    // Always send price ranges to avoid backend defaults
     params.minPrice = priceRange[0];
     params.maxPrice = priceRange[1];
 
@@ -80,7 +79,7 @@ export default function Product() {
     }
   };
 
-  /* 3. INITIAL WISHLIST LOAD */
+  /* 3. INITIAL WISHLIST LOAD (UPDATED) */
   useEffect(() => {
     const loadWishlist = async () => {
       const token = localStorage.getItem("token");
@@ -88,21 +87,16 @@ export default function Product() {
       try {
         const wish = await API.get("/wishlist");
         setWishlistItems(wish.data);
-        setWishlist(wish.data.map((i) => i.productId._id));
+        // Convert ObjectIds to strings for stable comparison
+        setWishlist(wish.data.map((i) => i.productId._id.toString()));
       } catch (err) { console.log("Wishlist error", err); }
     };
     loadWishlist();
   }, []);
 
-  /* 4. RESET PAGE WHEN FILTERS CHANGE */
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [category, priceRange, color, size, fabric, work, occasion]);
-
-  /* 5. FETCH TRIGGER (Watches page and filters) */
-  useEffect(() => {
-    fetchProducts();
-  }, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
+  /* 4. EFFECT TRIGGERS */
+  useEffect(() => { setCurrentPage(1); }, [category, priceRange, color, size, fabric, work, occasion]);
+  useEffect(() => { fetchProducts(); }, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
 
   /* UI HANDLERS */
   const toggleMulti = (setter, state, value) => {
@@ -126,16 +120,21 @@ export default function Product() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  /* 5. TOGGLE WISHLIST (UPDATED) */
   const toggleWishlist = async (productId) => {
+    const id = productId.toString();
     try {
-      if (wishlist.includes(productId)) {
-        const item = wishlistItems.find((i) => i.productId._id === productId);
+      if (wishlist.includes(id)) {
+        const item = wishlistItems.find((i) => i.productId._id.toString() === id);
+        if (!item) return;
+
         await API.delete(`/wishlist/${item._id}`);
-        setWishlist(wishlist.filter((id) => id !== productId));
+        setWishlist((prev) => prev.filter((wid) => wid !== id));
+        setWishlistItems((prev) => prev.filter((w) => w._id !== item._id));
       } else {
-        const res = await API.post("/wishlist", { productId });
-        setWishlist([...wishlist, productId]);
-        setWishlistItems([...wishlistItems, res.data]);
+        const res = await API.post("/wishlist", { productId: id });
+        setWishlist((prev) => [...prev, id]);
+        setWishlistItems((prev) => [...prev, res.data]);
       }
     } catch (err) { alert("Action failed. Please login."); }
   };
@@ -169,7 +168,6 @@ export default function Product() {
           </div>
 
           <div className="filter-drawer-content">
-            {/* Category */}
             <div className="filter-section">
               <h4>Category</h4>
               {categories.map((c) => (
@@ -180,7 +178,6 @@ export default function Product() {
               ))}
             </div>
 
-            {/* Fabric */}
             <div className="filter-section">
               <h4>Fabric</h4>
               {fabrics.map((f) => (
@@ -191,7 +188,6 @@ export default function Product() {
               ))}
             </div>
 
-            {/* Work */}
             <div className="filter-section">
               <h4>Work</h4>
               {works.map((w) => (
@@ -202,7 +198,6 @@ export default function Product() {
               ))}
             </div>
 
-            {/* Size */}
             <div className="filter-section">
               <h4>Size</h4>
               <div className="size-row">
@@ -214,7 +209,6 @@ export default function Product() {
               </div>
             </div>
 
-            {/* Color */}
             <div className="filter-section">
               <h4>Color</h4>
               <div className="color-row">
@@ -229,7 +223,6 @@ export default function Product() {
               </div>
             </div>
 
-            {/* Price */}
             <div className="filter-section">
               <h4>Price (₹)</h4>
               <div className="price-inputs">
@@ -251,7 +244,7 @@ export default function Product() {
 
           <div className="filter-actions">
             <button className="clear-btn" onClick={clearFilters}>Clear All</button>
-            <button className="apply-btn" onClick={() => setShowFilter(false)}>Apply Filters</button>
+            <button className="apply-btn" onClick={() => setShowFilter(false)}>Apply</button>
           </div>
         </aside>
 
@@ -261,9 +254,15 @@ export default function Product() {
               <div className="product-card" key={item._id}>
                 <div className="image-box">
                   <img src={item.images?.[0] || "/placeholder.png"} alt={item.name} onClick={() => navigate(`/product/${item._id}`)} />
-                  <button className={`wishlist-icon ${wishlist.includes(item._id) ? "liked" : ""}`} onClick={() => toggleWishlist(item._id)}>
+                  
+                  {/* Updated Wishlist Button Check */}
+                  <button 
+                    className={`wishlist-icon ${wishlist.includes(item._id.toString()) ? "liked" : ""}`} 
+                    onClick={() => toggleWishlist(item._id)}
+                  >
                     <FiHeart />
                   </button>
+
                   <button className="quick-add-btn" onClick={() => addToCart(item._id)}>
                     <FiPlus /> Quick Add
                   </button>
@@ -281,17 +280,13 @@ export default function Product() {
 
         {totalPages > 1 && (
           <div className="pagination">
-            <button className="page-btn" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
-              Prev
-            </button>
+            <button className="page-btn" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>Prev</button>
             {Array.from({ length: totalPages }, (_, i) => (
               <button key={i} className={`page-number ${currentPage === i + 1 ? "active" : ""}`} onClick={() => goToPage(i + 1)}>
                 {i + 1}
               </button>
             ))}
-            <button className="page-btn" disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
-              Next
-            </button>
+            <button className="page-btn" disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>Next</button>
           </div>
         )}
       </div>
