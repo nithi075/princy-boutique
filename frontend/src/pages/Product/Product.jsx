@@ -30,7 +30,7 @@ const [fabric, setFabric] = useState([]);
 const [work, setWork] = useState([]);
 const [occasion, setOccasion] = useState([]);
 
-/* OPTIONS */
+/* OPTIONS FROM ADD PRODUCT */
 const categories = ["Saree","Kurti","Gown","Night Dress","Nighty"];
 const fabrics = ["Cotton","Silk","Rayon"];
 const works = ["Printed","Embroidered","Minimal","Plain"];
@@ -80,15 +80,22 @@ console.log(err.response?.data || err.message);
 }
 };
 
-/* FETCH WHEN FILTER/PAGE CHANGE */
+/* LOAD WISHLIST */
 useEffect(() => {
-fetchProducts();
-}, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
+const loadWishlist = async () => {
+const token = localStorage.getItem("token");
+if (!token) return;
+try {
+const wish = await API.get("/wishlist");
+setWishlistItems(wish.data);
+setWishlist(wish.data.map(i => i.productId._id));
+} catch {}
+};
+loadWishlist();
+}, []);
 
-/* RESET PAGE ON FILTER */
-useEffect(() => {
-setCurrentPage(1);
-}, [category, priceRange, color, size, fabric, work, occasion]);
+useEffect(() => { fetchProducts(); }, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
+useEffect(() => { setCurrentPage(1); }, [category, priceRange, color, size, fabric, work, occasion]);
 
 /* MULTI SELECT */
 const toggleMulti = (setter, state, value) => {
@@ -106,11 +113,11 @@ setWork([]);
 setOccasion([]);
 };
 
-/* PAGINATION HANDLER */
+/* PAGINATION */
 const goToPage = (page) => {
-if(page < 1 || page > totalPages) return;
+if(page<1 || page>totalPages) return;
 setCurrentPage(page);
-window.scrollTo({ top:0, behavior:"smooth" });
+window.scrollTo({top:0,behavior:"smooth"});
 };
 
 /* WISHLIST */
@@ -143,8 +150,19 @@ return (
 <div className="product-page">
 <div className="shop-container">
 
-{/* FILTER BUTTON */}
+{/* HEADER */}
+
+<header className="shop-header">
+<div className="header-text">
+<h1 className="page-title">The Signature Collection</h1>
+<p className="page-sub">
+Timeless elegance meets contemporary craft.
+</p>
+</div>
+
 <button className="filter-btn" onClick={()=>setShowFilter(true)}> <FiFilter/> Filters </button>
+
+</header>
 
 {/* FILTER DRAWER */}
 
@@ -184,6 +202,58 @@ onChange={()=>toggleMulti(setFabric,fabric,f)}/>
 ))}
 </div>
 
+{/* WORK */}
+
+<div className="filter-section">
+<h4>Work</h4>
+{works.map(w=>(
+<label key={w}>
+<input type="checkbox" checked={work.includes(w)}
+onChange={()=>toggleMulti(setWork,work,w)}/>
+{w}
+</label>
+))}
+</div>
+
+{/* OCCASION */}
+
+<div className="filter-section">
+<h4>Occasion</h4>
+{occasions.map(o=>(
+<label key={o}>
+<input type="checkbox" checked={occasion.includes(o)}
+onChange={()=>toggleMulti(setOccasion,occasion,o)}/>
+{o}
+</label>
+))}
+</div>
+
+{/* SIZE */}
+
+<div className="filter-section">
+<h4>Size</h4>
+<div className="size-row">
+{sizes.map(s=>(
+<span key={s} className={size.includes(s)?"active":""}
+onClick={()=>toggleMulti(setSize,size,s)}>{s}</span>
+))}
+</div>
+</div>
+
+{/* COLOR */}
+
+<div className="filter-section">
+<h4>Color</h4>
+<div className="color-row">
+{colors.map(c=>(
+<div key={c}
+className={`color ${color.includes(c)?"active":""}`}
+style={{background:c.toLowerCase()}}
+onClick={()=>toggleMulti(setColor,color,c)}/>
+))}
+</div>
+</div>
+
 {/* PRICE */}
 
 <div className="filter-section">
@@ -204,48 +274,36 @@ onChange={(e)=>setPriceRange([priceRange[0],Number(e.target.value)])}/>
 </div>
 </aside>
 
-{/* PRODUCT GRID */}
+{/* PRODUCTS */}
 
 <div className="product-grid">
 {products.map(item=>(
 <div className="product-card" key={item._id}>
-
 <div className="image-box">
 <img src={item.images?.[0] || "/placeholder.png"} alt={item.name}
 onClick={()=>navigate(`/product/${item._id}`)}/>
-
 <button className={`wishlist-icon ${wishlist.includes(item._id)?"liked":""}`}
-onClick={()=>toggleWishlist(item._id)}> <FiHeart/> </button>
-
-<button className="quick-add-btn" onClick={()=>addToCart(item._id)}> <FiPlus/> Quick Add </button>
-
+onClick={()=>toggleWishlist(item._id)}><FiHeart/></button>
+<button className="quick-add-btn" onClick={()=>addToCart(item._id)}>
+<FiPlus/> Quick Add</button>
 </div>
-
 <div className="product-info">
 <h4 className="product-name">{item.name}</h4>
 <span className="current-price">₹{Number(item.price||0).toLocaleString("en-IN")}</span>
 </div>
-
 </div>
 ))}
 </div>
 
-{/* PAGINATION UI */}
+{/* PAGINATION */}
 
 <div className="pagination">
-<button className="page-btn" disabled={currentPage===1}
-onClick={()=>goToPage(currentPage-1)}>Prev</button>
-
+<button className="page-btn" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)}>Prev</button>
 {Array.from({length:totalPages},(_,i)=>(
-<button key={i}
-className={`page-number ${currentPage===i+1?"active":""}`}
-onClick={()=>goToPage(i+1)}>
-{i+1} </button>
+<button key={i} className={`page-number ${currentPage===i+1?"active":""}`}
+onClick={()=>goToPage(i+1)}>{i+1}</button>
 ))}
-
-<button className="page-btn" disabled={currentPage===totalPages}
-onClick={()=>goToPage(currentPage+1)}>Next</button>
-
+<button className="page-btn" disabled={currentPage===totalPages} onClick={()=>goToPage(currentPage+1)}>Next</button>
 </div>
 
 </div>
