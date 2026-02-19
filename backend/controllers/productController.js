@@ -101,37 +101,49 @@ res.status(500).json({ message: err.message });
 CREATE PRODUCT (CLOUDINARY FIXED)
 ========================================================= */
 export const createProduct = async (req, res) => {
-try {
+  try {
+    console.log("FILES:", req.files?.length);
+    console.log("BODY:", req.body);
 
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files received" });
+    }
 
-if (!req.files || req.files.length === 0)
-  return res.status(400).json({ message: "Please upload images" });
+    const imageUrls = [];
 
-const imageUrls = [];
+    for (const file of req.files) {
+      try {
+        console.log("Uploading:", file.originalname, file.mimetype, file.size);
 
-for (const file of req.files) {
-  const url = await uploadToCloudinary(file.buffer);
-  imageUrls.push(url);
-}
+        const url = await uploadToCloudinary(file);
 
-const product = await Product.create({
-  ...req.body,
-  price: Number(req.body.price),
-  readyMade: req.body.readyMade === "true",
-  featured: req.body.featured === "true",
-  sizes: JSON.parse(req.body.sizes || "[]"),
-  colors: JSON.parse(req.body.colors || "[]"),
-  images: imageUrls
-});
+        console.log("Uploaded URL:", url);
+        imageUrls.push(url);
 
-res.status(201).json(product);
+      } catch (uploadErr) {
+        console.error("UPLOAD FAILED:", uploadErr);
+        return res.status(500).json({ message: "Cloudinary upload failed", error: uploadErr.message });
+      }
+    }
 
+    const product = await Product.create({
+      ...req.body,
+      price: Number(req.body.price),
+      readyMade: req.body.readyMade === "true",
+      featured: req.body.featured === "true",
+      sizes: JSON.parse(req.body.sizes || "[]"),
+      colors: JSON.parse(req.body.colors || "[]"),
+      images: imageUrls
+    });
 
-} catch (err) {
-console.error("CREATE PRODUCT ERROR:", err);
-res.status(500).json({ message: err.message });
-}
+    res.status(201).json(product);
+
+  } catch (err) {
+    console.error("CREATE PRODUCT FATAL:", err);
+    res.status(500).json({ message: err.message, stack: err.stack });
+  }
 };
+
 
 /* =========================================================
 UPDATE PRODUCT
