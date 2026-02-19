@@ -5,20 +5,29 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // Auto login after refresh
+  /* AUTO LOGIN AFTER REFRESH */
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem("token");
+
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
-  // LOGIN
+  /* LOGIN */
   const login = (data) => {
-    localStorage.setItem("user", JSON.stringify(data));
-    setUser(data);
+    // data = { token, user }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    setUser(data.user);
   };
 
-  // LOGOUT
+  /* LOGOUT */
   const logout = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
   };
