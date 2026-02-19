@@ -1,301 +1,300 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Product.css";
 import { FiHeart, FiFilter, FiX, FiPlus } from "react-icons/fi";
 import API from "../../api/axios";
 
 export default function Product() {
+  const navigate = useNavigate();
 
-const navigate = useNavigate();
+  /* UI STATES */
+  const [showFilter, setShowFilter] = useState(false);
 
-/* UI */
-const [showFilter, setShowFilter] = useState(false);
+  /* DATA STATES */
+  const [products, setProducts] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
 
-/* DATA */
-const [products, setProducts] = useState([]);
-const [wishlist, setWishlist] = useState([]);
-const [wishlistItems, setWishlistItems] = useState([]);
+  /* PAGINATION & FILTERS */
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 8;
 
-/* PAGINATION */
-const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const limit = 8;
+  const [category, setCategory] = useState([]);
+  const [priceRange, setPriceRange] = useState([0, 100000]);
+  const [color, setColor] = useState([]);
+  const [size, setSize] = useState([]);
+  const [fabric, setFabric] = useState([]);
+  const [work, setWork] = useState([]);
+  const [occasion, setOccasion] = useState([]);
 
-/* FILTER STATES */
-const [category, setCategory] = useState([]);
-const [priceRange, setPriceRange] = useState([0,100000]);
-const [color, setColor] = useState([]);
-const [size, setSize] = useState([]);
-const [fabric, setFabric] = useState([]);
-const [work, setWork] = useState([]);
-const [occasion, setOccasion] = useState([]);
+  /* CONFIGURATION OPTIONS */
+  const categories = ["Sharara", "Kurti", "Gown", "Night Dress", "Short Kurti"];
+  const fabrics = ["Cotton", "Silk", "Rayon"];
+  const works = ["Printed", "Embroidered", "Minimal", "Plain"];
+  const occasions = ["Daily Wear", "Casual Wear", "Festive Wear", "Party Wear", "Wedding Wear"];
+  const sizes = ["XS", "S", "M", "L", "XL", "Free"];
+  const colors = ["Red", "Maroon", "Pink", "Blue", "Green", "Yellow", "Black", "White", "Gold", "Silver", "Purple", "Orange"];
 
-/* OPTIONS FROM ADD PRODUCT */
-const categories = ["Sharara","Kurti","Gown","Night Dress","Short Kurti"];
-const fabrics = ["Cotton","Silk","Rayon"];
-const works = ["Printed","Embroidered","Minimal","Plain"];
-const occasions = ["Daily Wear","Casual Wear","Festive Wear","Party Wear","Wedding Wear"];
-const sizes = ["XS","S","M","L","XL","Free"];
-const colors = ["Red","Maroon","Pink","Blue","Green","Yellow","Black","White","Gold","Silver","Purple","Orange"];
+  /* HELPER: PARSE ARRAYS FROM DB */
+  const parseArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    try { return JSON.parse(value); } 
+    catch { return [value]; }
+  };
 
-/* SAFE ARRAY PARSER */
-const parseArray = (value) => {
-if (Array.isArray(value)) return value;
-if (!value) return [];
-try { return JSON.parse(value); }
-catch { return [value]; }
-};
+  /* 1. BUILD CLEAN PARAMS */
+  const buildParams = useCallback(() => {
+    const params = { page: currentPage, limit };
 
-/* 🔥 BUILD CLEAN PARAMS (FILTER FIX) */
-const buildParams = () => {
-const params = {
-page: currentPage,
-limit
-};
+    if (category.length) params.category = category.join(",");
+    if (fabric.length) params.fabric = fabric.join(",");
+    if (work.length) params.work = work.join(",");
+    if (occasion.length) params.occasion = occasion.join(",");
+    if (size.length) params.size = size.join(",");
+    if (color.length) params.color = color.join(",");
 
-if (category.length) params.category = category.join(",");
-if (fabric.length) params.fabric = fabric.join(",");
-if (work.length) params.work = work.join(",");
-if (occasion.length) params.occasion = occasion.join(",");
-if (size.length) params.size = size.join(",");
-if (color.length) params.color = color.join(",");
+    // Always send price ranges to avoid backend defaults
+    params.minPrice = priceRange[0];
+    params.maxPrice = priceRange[1];
 
-if (priceRange[0] > 0) params.minPrice = priceRange[0];
-if (priceRange[1] < 100000) params.maxPrice = priceRange[1];
+    return params;
+  }, [currentPage, category, fabric, work, occasion, size, color, priceRange]);
 
-return params;
-};
+  /* 2. FETCH PRODUCTS FUNCTION */
+  const fetchProducts = async () => {
+    try {
+      const res = await API.get("/products", { params: buildParams() });
+      const safeProducts = res.data.products.map((p) => ({
+        ...p,
+        sizes: parseArray(p.sizes),
+        colors: parseArray(p.colors),
+        images: parseArray(p.images),
+      }));
 
-/* FETCH PRODUCTS */
-const fetchProducts = async () => {
-try {
+      setProducts(safeProducts);
+      setTotalPages(res.data.totalPages || 1);
+    } catch (err) {
+      console.error("Fetch Error:", err.response?.data || err.message);
+    }
+  };
 
-const res = await API.get("/products", {
-params: buildParams()
-});
+  /* 3. INITIAL WISHLIST LOAD */
+  useEffect(() => {
+    const loadWishlist = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const wish = await API.get("/wishlist");
+        setWishlistItems(wish.data);
+        setWishlist(wish.data.map((i) => i.productId._id));
+      } catch (err) { console.log("Wishlist error", err); }
+    };
+    loadWishlist();
+  }, []);
 
-const safeProducts = res.data.products.map(p => ({
-...p,
-sizes: parseArray(p.sizes),
-colors: parseArray(p.colors),
-images: parseArray(p.images)
-}));
+  /* 4. RESET PAGE WHEN FILTERS CHANGE */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, priceRange, color, size, fabric, work, occasion]);
 
-setProducts(safeProducts);
-setTotalPages(res.data.totalPages || 1);
+  /* 5. FETCH TRIGGER (Watches page and filters) */
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
 
-} catch (err) {
-console.log(err.response?.data || err.message);
-}
-};
+  /* UI HANDLERS */
+  const toggleMulti = (setter, state, value) => {
+    setter(state.includes(value) ? state.filter((v) => v !== value) : [...state, value]);
+  };
 
-/* LOAD WISHLIST */
-useEffect(() => {
-const loadWishlist = async () => {
-const token = localStorage.getItem("token");
-if (!token) return;
-try {
-const wish = await API.get("/wishlist");
-setWishlistItems(wish.data);
-setWishlist(wish.data.map(i => i.productId._id));
-} catch {}
-};
-loadWishlist();
-}, []);
+  const clearFilters = () => {
+    setCategory([]);
+    setPriceRange([0, 100000]);
+    setColor([]);
+    setSize([]);
+    setFabric([]);
+    setWork([]);
+    setOccasion([]);
+    setCurrentPage(1);
+  };
 
-/* 🔥 RESET PAGE WHEN FILTER CHANGES */
-useEffect(() => {
-setCurrentPage(1);
-}, [category, priceRange, color, size, fabric, work, occasion]);
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-/* 🔥 FETCH PRODUCTS */
-useEffect(() => {
-fetchProducts();
-}, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
+  const toggleWishlist = async (productId) => {
+    try {
+      if (wishlist.includes(productId)) {
+        const item = wishlistItems.find((i) => i.productId._id === productId);
+        await API.delete(`/wishlist/${item._id}`);
+        setWishlist(wishlist.filter((id) => id !== productId));
+      } else {
+        const res = await API.post("/wishlist", { productId });
+        setWishlist([...wishlist, productId]);
+        setWishlistItems([...wishlistItems, res.data]);
+      }
+    } catch (err) { alert("Action failed. Please login."); }
+  };
 
-/* MULTI SELECT */
-const toggleMulti = (setter, state, value) => {
-setter(state.includes(value) ? state.filter(v => v !== value) : [...state, value]);
-};
+  const addToCart = async (productId) => {
+    try {
+      await API.post("/cart", { productId, quantity: 1 });
+      alert("Added to cart 🛒");
+    } catch { alert("Login required"); }
+  };
 
-/* CLEAR FILTERS */
-const clearFilters = () => {
-setCategory([]);
-setPriceRange([0,100000]);
-setColor([]);
-setSize([]);
-setFabric([]);
-setWork([]);
-setOccasion([]);
-};
+  return (
+    <div className="product-page">
+      <div className="shop-container">
+        <header className="shop-header">
+          <div className="header-text">
+            <h1 className="page-title">The Signature Collection</h1>
+            <p className="page-sub">Timeless elegance meets contemporary craft.</p>
+          </div>
+          <button className="filter-btn" onClick={() => setShowFilter(true)}>
+            <FiFilter /> Filters
+          </button>
+        </header>
 
-/* PAGINATION */
-const goToPage = (page) => {
-if(page<1 || page>totalPages) return;
-setCurrentPage(page);
-window.scrollTo({top:0,behavior:"smooth"});
-};
+        <div className={`overlay ${showFilter ? "active" : ""}`} onClick={() => setShowFilter(false)} />
 
-/* WISHLIST */
-const toggleWishlist = async (productId) => {
-try {
-if (wishlist.includes(productId)) {
-const item = wishlistItems.find(i => i.productId._id === productId);
-await API.delete(`/wishlist/${item._id}`);
-setWishlist(wishlist.filter(id => id !== productId));
-} else {
-const res = await API.post("/wishlist", { productId });
-setWishlist([...wishlist, productId]);
-setWishlistItems([...wishlistItems, res.data]);
-}
-} catch {}
-};
+        <aside className={`filter-drawer ${showFilter ? "open" : ""}`}>
+          <div className="drawer-header">
+            <h3>Filters</h3>
+            <FiX onClick={() => setShowFilter(false)} style={{ cursor: "pointer" }} />
+          </div>
 
-/* CART */
-const addToCart = async (productId) => {
-try {
-await API.post("/cart", { productId, quantity: 1 });
-alert("Added to cart 🛒");
-} catch {
-alert("Login required");
-}
-};
+          <div className="filter-drawer-content">
+            {/* Category */}
+            <div className="filter-section">
+              <h4>Category</h4>
+              {categories.map((c) => (
+                <label key={c}>
+                  <input type="checkbox" checked={category.includes(c)} onChange={() => toggleMulti(setCategory, category, c)} />
+                  {c}
+                </label>
+              ))}
+            </div>
 
-return (
-<div className="product-page">
-<div className="shop-container">
+            {/* Fabric */}
+            <div className="filter-section">
+              <h4>Fabric</h4>
+              {fabrics.map((f) => (
+                <label key={f}>
+                  <input type="checkbox" checked={fabric.includes(f)} onChange={() => toggleMulti(setFabric, fabric, f)} />
+                  {f}
+                </label>
+              ))}
+            </div>
 
-<header className="shop-header">
-<div className="header-text">
-<h1 className="page-title">The Signature Collection</h1>
-<p className="page-sub">Timeless elegance meets contemporary craft.</p>
-</div>
-<button className="filter-btn" onClick={()=>setShowFilter(true)}> <FiFilter/> Filters </button>
-</header>
+            {/* Work */}
+            <div className="filter-section">
+              <h4>Work</h4>
+              {works.map((w) => (
+                <label key={w}>
+                  <input type="checkbox" checked={work.includes(w)} onChange={() => toggleMulti(setWork, work, w)} />
+                  {w}
+                </label>
+              ))}
+            </div>
 
-<div className={`overlay ${showFilter?"active":""}`} onClick={()=>setShowFilter(false)} />
+            {/* Size */}
+            <div className="filter-section">
+              <h4>Size</h4>
+              <div className="size-row">
+                {sizes.map((s) => (
+                  <span key={s} className={size.includes(s) ? "active" : ""} onClick={() => toggleMulti(setSize, size, s)}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-<aside className={`filter-drawer ${showFilter?"open":""}`}>
-<div className="drawer-header">
-<h3>Filters</h3>
-<FiX onClick={()=>setShowFilter(false)}/>
-</div>
+            {/* Color */}
+            <div className="filter-section">
+              <h4>Color</h4>
+              <div className="color-row">
+                {colors.map((c) => (
+                  <div
+                    key={c}
+                    className={`color ${color.includes(c) ? "active" : ""}`}
+                    style={{ background: c.toLowerCase() }}
+                    onClick={() => toggleMulti(setColor, color, c)}
+                  />
+                ))}
+              </div>
+            </div>
 
-<div className="filter-drawer-content">
+            {/* Price */}
+            <div className="filter-section">
+              <h4>Price (₹)</h4>
+              <div className="price-inputs">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={priceRange[0]}
+                  onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={priceRange[1]}
+                  onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                />
+              </div>
+            </div>
+          </div>
 
-<div className="filter-section">
-<h4>Category</h4>
-{categories.map(c=>(
-<label key={c}>
-<input type="checkbox" checked={category.includes(c)}
-onChange={()=>toggleMulti(setCategory,category,c)}/>
-{c}
-</label>
-))}
-</div>
+          <div className="filter-actions">
+            <button className="clear-btn" onClick={clearFilters}>Clear All</button>
+            <button className="apply-btn" onClick={() => setShowFilter(false)}>Apply Filters</button>
+          </div>
+        </aside>
 
-<div className="filter-section">
-<h4>Fabric</h4>
-{fabrics.map(f=>(
-<label key={f}>
-<input type="checkbox" checked={fabric.includes(f)}
-onChange={()=>toggleMulti(setFabric,fabric,f)}/>
-{f}
-</label>
-))}
-</div>
+        <div className="product-grid">
+          {products.length > 0 ? (
+            products.map((item) => (
+              <div className="product-card" key={item._id}>
+                <div className="image-box">
+                  <img src={item.images?.[0] || "/placeholder.png"} alt={item.name} onClick={() => navigate(`/product/${item._id}`)} />
+                  <button className={`wishlist-icon ${wishlist.includes(item._id) ? "liked" : ""}`} onClick={() => toggleWishlist(item._id)}>
+                    <FiHeart />
+                  </button>
+                  <button className="quick-add-btn" onClick={() => addToCart(item._id)}>
+                    <FiPlus /> Quick Add
+                  </button>
+                </div>
+                <div className="product-info">
+                  <h4 className="product-name">{item.name}</h4>
+                  <span className="current-price">₹{Number(item.price || 0).toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="no-products">No products found matching these filters.</div>
+          )}
+        </div>
 
-<div className="filter-section">
-<h4>Work</h4>
-{works.map(w=>(
-<label key={w}>
-<input type="checkbox" checked={work.includes(w)}
-onChange={()=>toggleMulti(setWork,work,w)}/>
-{w}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Occasion</h4>
-{occasions.map(o=>(
-<label key={o}>
-<input type="checkbox" checked={occasion.includes(o)}
-onChange={()=>toggleMulti(setOccasion,occasion,o)}/>
-{o}
-</label>
-))}
-</div>
-
-<div className="filter-section">
-<h4>Size</h4>
-<div className="size-row">
-{sizes.map(s=>(
-<span key={s} className={size.includes(s)?"active":""}
-onClick={()=>toggleMulti(setSize,size,s)}>{s}</span>
-))}
-</div>
-</div>
-
-<div className="filter-section">
-<h4>Color</h4>
-<div className="color-row">
-{colors.map(c=>(
-<div key={c}
-className={`color ${color.includes(c)?"active":""}`}
-style={{background:c.toLowerCase()}}
-onClick={()=>toggleMulti(setColor,color,c)}/>
-))}
-</div>
-</div>
-
-<div className="filter-section">
-<h4>Price</h4>
-<input type="number" placeholder="Min"
-value={priceRange[0]}
-onChange={(e)=>setPriceRange([Number(e.target.value),priceRange[1]])}/>
-<input type="number" placeholder="Max"
-value={priceRange[1]}
-onChange={(e)=>setPriceRange([priceRange[0],Number(e.target.value)])}/>
-</div>
-
-</div>
-
-<div className="filter-actions">
-<button className="clear-btn" onClick={clearFilters}>Clear</button>
-<button className="apply-btn" onClick={()=>setShowFilter(false)}>Apply</button>
-</div>
-</aside>
-
-<div className="product-grid">
-{products.map(item=>(
-<div className="product-card" key={item._id}>
-<div className="image-box">
-<img src={item.images?.[0] || "/placeholder.png"} alt={item.name}
-onClick={()=>navigate(`/product/${item._id}`)}/>
-<button className={`wishlist-icon ${wishlist.includes(item._id)?"liked":""}`}
-onClick={()=>toggleWishlist(item._id)}><FiHeart/></button>
-<button className="quick-add-btn" onClick={()=>addToCart(item._id)}>
-<FiPlus/> Quick Add</button>
-</div>
-<div className="product-info">
-<h4 className="product-name">{item.name}</h4>
-<span className="current-price">₹{Number(item.price||0).toLocaleString("en-IN")}</span>
-</div>
-</div>
-))}
-</div>
-
-<div className="pagination">
-<button className="page-btn" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)}>Prev</button>
-{Array.from({length:totalPages},(_,i)=>(
-<button key={i} className={`page-number ${currentPage===i+1?"active":""}`}
-onClick={()=>goToPage(i+1)}>{i+1}</button>
-))}
-<button className="page-btn" disabled={currentPage===totalPages} onClick={()=>goToPage(currentPage+1)}>Next</button>
-</div>
-
-</div>
-</div>
-);
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button className="page-btn" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button key={i} className={`page-number ${currentPage === i + 1 ? "active" : ""}`} onClick={() => goToPage(i + 1)}>
+                {i + 1}
+              </button>
+            ))}
+            <button className="page-btn" disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
