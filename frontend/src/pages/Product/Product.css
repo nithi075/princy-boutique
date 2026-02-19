@@ -665,3 +665,54 @@ transition:.25s;
   box-shadow:0 6px 18px rgba(197,151,143,.35);
   transform:scale(1.08);
 }
+/* ===== PRICE FILTER ===== */
+
+.filter-section input[type="number"]{
+  width:100%;
+  padding:12px 14px;
+  margin-bottom:12px;
+
+  border:1px solid var(--border-soft);
+  border-radius:10px;
+
+  font-size:13px;
+  font-family:'Poppins',sans-serif;
+
+  background:#fafafa;
+  color:var(--text-main);
+
+  outline:none;
+  transition:all .25s ease;
+}
+
+/* focus effect */
+.filter-section input[type="number"]:focus{
+  background:#fff;
+  border-color:var(--primary-accent);
+  box-shadow:0 0 0 3px rgba(197,151,143,.15);
+}
+
+/* remove arrows (chrome) */
+.filter-section input[type="number"]::-webkit-outer-spin-button,
+.filter-section input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+
+/* remove arrows (firefox) */
+.filter-section input[type="number"]{
+  -moz-appearance:textfield;
+}
+
+/* placeholder style */
+.filter-section input::placeholder{
+  color:#b5a9a6;
+  font-size:12px;
+}
+
+/* spacing inside price block */
+.filter-section:has(input[type="number"]){
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
