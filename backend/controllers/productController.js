@@ -1,20 +1,35 @@
 import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
-import streamifier from "streamifier";
+import { Readable } from "stream";
 
 /* =========================================================
-CLOUDINARY BUFFER UPLOAD HELPER
+CLOUDINARY UPLOAD (RENDER SAFE)
 ========================================================= */
-const uploadToCloudinary = (buffer) => {
+const uploadToCloudinary = (file) => {
 return new Promise((resolve, reject) => {
+
+
 const stream = cloudinary.uploader.upload_stream(
-{ folder: "products" },
-(error, result) => {
-if (error) return reject(error);
-resolve(result.secure_url);
-}
+  {
+    folder: "products",
+    resource_type: "image",
+    timeout: 60000
+  },
+  (error, result) => {
+    if (error) {
+      console.error("CLOUDINARY ERROR:", error);
+      return reject(error);
+    }
+    resolve(result.secure_url);
+  }
 );
-streamifier.createReadStream(buffer).pipe(stream);
+
+const readable = new Readable();
+readable.push(file.buffer);
+readable.push(null);
+readable.pipe(stream);
+
+
 });
 };
 
@@ -98,50 +113,55 @@ res.status(500).json({ message: err.message });
 };
 
 /* =========================================================
-CREATE PRODUCT (CLOUDINARY FIXED)
+CREATE PRODUCT
 ========================================================= */
 export const createProduct = async (req, res) => {
-  try {
-    console.log("FILES:", req.files?.length);
-    console.log("BODY:", req.body);
+try {
+console.log("---- REQUEST START ----");
+console.log("files:", req.files?.length);
+console.log("body:", req.body);
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "No files received" });
-    }
+```
+if (!req.files || req.files.length === 0) {
+  console.log("NO FILES RECEIVED");
+  return res.status(400).json({ message: "No files received" });
+}
 
-    const imageUrls = [];
+const imageUrls = [];
 
-    for (const file of req.files) {
-      try {
-        console.log("Uploading:", file.originalname, file.mimetype, file.size);
+for (const file of req.files) {
+  console.log("FILE SIZE:", file.size);
 
-        const url = await uploadToCloudinary(file);
+  const url = await uploadToCloudinary(file);
+  console.log("UPLOADED:", url);
 
-        console.log("Uploaded URL:", url);
-        imageUrls.push(url);
+  imageUrls.push(url);
+}
 
-      } catch (uploadErr) {
-        console.error("UPLOAD FAILED:", uploadErr);
-        return res.status(500).json({ message: "Cloudinary upload failed", error: uploadErr.message });
-      }
-    }
+console.log("CREATING PRODUCT");
 
-    const product = await Product.create({
-      ...req.body,
-      price: Number(req.body.price),
-      readyMade: req.body.readyMade === "true",
-      featured: req.body.featured === "true",
-      sizes: JSON.parse(req.body.sizes || "[]"),
-      colors: JSON.parse(req.body.colors || "[]"),
-      images: imageUrls
-    });
+const product = await Product.create({
+  ...req.body,
+  price: Number(req.body.price),
+  readyMade: req.body.readyMade === "true",
+  featured: req.body.featured === "true",
+  sizes: JSON.parse(req.body.sizes || "[]"),
+  colors: JSON.parse(req.body.colors || "[]"),
+  images: imageUrls
+});
 
-    res.status(201).json(product);
+console.log("PRODUCT CREATED");
 
-  } catch (err) {
-    console.error("CREATE PRODUCT FATAL:", err);
-    res.status(500).json({ message: err.message, stack: err.stack });
-  }
+res.status(201).json(product);
+```
+
+} catch (err) {
+console.error("🔥🔥 REAL ERROR:", err);
+res.status(500).json({
+message: err.message,
+stack: err.stack
+});
+}
 };
 
 
@@ -158,18 +178,9 @@ return res.status(404).json({ message: "Product not found" });
 let images = existingProduct.images;
 
 if (req.files && req.files.length > 0) {
-
-  // delete old images
-  for (const img of existingProduct.images) {
-    try {
-      const publicId = img.split("/").slice(-2).join("/").split(".")[0];
-      await cloudinary.uploader.destroy(publicId);
-    } catch {}
-  }
-
   images = [];
   for (const file of req.files) {
-    const url = await uploadToCloudinary(file.buffer);
+    const url = await uploadToCloudinary(file);
     images.push(url);
   }
 }
@@ -206,15 +217,7 @@ const product = await Product.findById(req.params.id);
 if (!product) return res.status(404).json({ message: "Product not found" });
 
 
-for (const img of product.images) {
-  try {
-    const publicId = img.split("/").slice(-2).join("/").split(".")[0];
-    await cloudinary.uploader.destroy(publicId);
-  } catch {}
-}
-
 await Product.findByIdAndDelete(req.params.id);
-
 res.json({ message: "Product deleted successfully" });
 
 
