@@ -37,9 +37,27 @@ export default function Product() {
     fetchWishlist();
   }, []);
 
+  const parseArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    if (typeof value === "string") {
+      try { return JSON.parse(value); }
+      catch { return [value]; }
+    }
+    return [];
+  };
+
   const fetchProducts = async () => {
     const res = await API.get("/products");
-    setProducts(res.data);
+
+    const safeProducts = res.data.map(p => ({
+      ...p,
+      sizes: parseArray(p.sizes),
+      colors: parseArray(p.colors),
+      images: parseArray(p.images)
+    }));
+
+    setProducts(safeProducts);
   };
 
   const fetchWishlist = async () => {
@@ -98,12 +116,14 @@ export default function Product() {
 
     if (selectedSizes.length)
       data = data.filter(p =>
-        p.sizes?.some(size => selectedSizes.includes(size))
+        Array.isArray(p.sizes) &&
+        p.sizes.some(size => selectedSizes.includes(size))
       );
 
     if (selectedColors.length)
       data = data.filter(p =>
-        p.colors?.some(color => selectedColors.includes(color))
+        Array.isArray(p.colors) &&
+        p.colors.some(color => selectedColors.includes(color))
       );
 
     data = data.filter(p =>
@@ -292,25 +312,6 @@ export default function Product() {
             </div>
 
           </div>
-
-          {/* ACTIONS */}
-          <div className="filter-actions">
-            <button className="clear-btn" onClick={()=>{
-              setSelectedCategory([]);
-              setSelectedFabric([]);
-              setSelectedWork([]);
-              setSelectedOccasion([]);
-              setSelectedSizes([]);
-              setSelectedColors([]);
-              setPriceRange([0,100000]);
-            }}>
-              Clear
-            </button>
-
-            <button className="apply-btn" onClick={()=>setShowFilter(false)}>
-              Apply
-            </button>
-          </div>
         </aside>
 
         {/* PRODUCT GRID */}
@@ -322,7 +323,7 @@ export default function Product() {
                 {item.featured && <span className="product-tag">Featured</span>}
 
                 <img
-                  src={item.images?.[0]}
+                  src={item.images?.[0] || "/placeholder.png"}
                   alt={item.name}
                   onClick={()=>navigate(`/product/${item._id}`)}
                 />
