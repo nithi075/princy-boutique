@@ -1,191 +1,356 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
 import "./Product.css";
 import { FiHeart, FiFilter, FiX, FiPlus } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 
 export default function Product() {
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-/* UI */
-const [showFilter, setShowFilter] = useState(false);
+  /* ---------------- STATES ---------------- */
 
-/* DATA */
-const [products, setProducts] = useState([]);
-const [wishlist, setWishlist] = useState([]);
-const [wishlistItems, setWishlistItems] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [showFilter, setShowFilter] = useState(false);
 
-/* PAGINATION */
-const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const limit = 8;
+  /* filters */
+  const [selectedCategory, setSelectedCategory] = useState([]);
+  const [selectedFabric, setSelectedFabric] = useState([]);
+  const [selectedWork, setSelectedWork] = useState([]);
+  const [selectedOccasion, setSelectedOccasion] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [priceRange, setPriceRange] = useState([0, 100000]);
 
-/* FILTER STATES */
-const [category, setCategory] = useState([]);
-const [priceRange, setPriceRange] = useState([]);
-const [color, setColor] = useState(null);
-const [size, setSize] = useState(null);
-const [fabric, setFabric] = useState([]);
-const [work, setWork] = useState([]);
-const [occasion, setOccasion] = useState([]);
-const [fit, setFit] = useState([]);
+  /* sort */
+  const [sortType, setSortType] = useState("featured");
 
-/* FILTER OPTIONS */
-const categories = ["Saree","Kurti","Gown","Night Dress","Nighty"];
-const fabrics = ["Cotton","Silk","Rayon"];
-const works = ["Printed","Embroidered","Minimal","Plain"];
-const occasions = ["Daily Wear","Casual Wear","Festive Wear","Party Wear","Wedding Wear"];
-const fits = ["Straight Fit","A-Line","Flared","Anarkali","Nayra Cut","Regular Fit","Loose Fit"];
-const sizes = ["XS","S","M","L","XL","Free"];
-const colors = ["Red","Maroon","Pink","Blue","Green","Yellow","Black","White","Gold","Silver","Purple","Orange"];
-const prices = ["0-999","1000-1999","2000-2999","3000-4999","5000-9999"];
+  /* pagination */
+  const [page, setPage] = useState(1);
+  const perPage = 8;
 
-/* FETCH PRODUCTS */
-const fetchProducts = async () => {
-try {
-const res = await API.get("/products", {
-params: {
-page: currentPage,
-limit: limit,
-category: category.join(","),
-price: priceRange.join(","),
-color,
-size,
-fabric: fabric.join(","),
-work: work.join(","),
-occasion: occasion.join(","),
-fit: fit.join(",")
-}
-});
-setProducts(res.data.products || []);
-setTotalPages(res.data.totalPages || 1);
-} catch (err) {
-console.log(err.response?.data || err.message);
-}
-};
+  /* ---------------- FETCH ---------------- */
 
-/* LOAD WISHLIST */
-useEffect(() => {
-  const loadWishlist = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return; // ⛔ DON'T CALL API
+  useEffect(() => {
+    fetchProducts();
+    fetchWishlist();
+  }, []);
 
-    try {
-      const wish = await API.get("/wishlist");
-      setWishlistItems(wish.data);
-      setWishlist(wish.data.map(i => i.productId._id));
-    } catch (err) {
-      console.log("Wishlist skipped (not logged in)");
-    }
+  const fetchProducts = async () => {
+    const res = await API.get("/products");
+    setProducts(res.data);
   };
 
-  loadWishlist();
-}, []);
-6
-/* FETCH WHEN FILTER/PAGE CHANGE */
-useEffect(() => {
-fetchProducts();
-}, [currentPage, category, priceRange, color, size, fabric, work, occasion, fit]);
+  const fetchWishlist = async () => {
+    try {
+      const res = await API.get("/wishlist");
+      setWishlist(res.data.map(w => w.productId));
+    } catch {}
+  };
 
-/* RESET PAGE WHEN FILTER CHANGE */
-useEffect(() => {
-setCurrentPage(1);
-}, [category, priceRange, color, size, fabric, work, occasion, fit]);
+  /* ---------------- WISHLIST ---------------- */
 
-/* MULTI SELECT */
-const toggleMulti = (setter, state, value) => {
-setter(state.includes(value) ? state.filter(v => v !== value) : [...state, value]);
-};
+  const toggleWishlist = async (id) => {
+    await API.post("/wishlist", { productId: id });
 
-/* CLEAR FILTERS */
-const clearFilters = () => {
-setCategory([]);
-setPriceRange([]);
-setColor(null);
-setSize(null);
-setFabric([]);
-setWork([]);
-setOccasion([]);
-setFit([]);
-};
+    setWishlist(prev =>
+      prev.includes(id)
+        ? prev.filter(i => i !== id)
+        : [...prev, id]
+    );
+  };
 
-/* PAGINATION */
-const goToPage = (page) => {
-if (page < 1 || page > totalPages) return;
-setCurrentPage(page);
-window.scrollTo({ top: 0, behavior: "smooth" });
-};
+  /* ---------------- CART ---------------- */
 
-/* WISHLIST */
-const toggleWishlist = async (productId) => {
-try {
-if (wishlist.includes(productId)) {
-const item = wishlistItems.find(i => i.productId._id === productId);
-await API.delete(`/wishlist/${item._id}`);
-setWishlist(wishlist.filter(id => id !== productId));
-} else {
-const res = await API.post("/wishlist", { productId });
-setWishlist([...wishlist, productId]);
-setWishlistItems([...wishlistItems, res.data]);
-}
-} catch (err) {
-console.log(err.response?.data || err.message);
-}
-};
+  const addToCart = async (id) => {
+    await API.post("/cart", { productId: id, quantity: 1 });
+    alert("Added to cart 🛒");
+  };
 
-/* CART */
-const addToCart = async (productId) => {
-try {
-await API.post("/cart", { productId, quantity: 1 });
-alert("Added to cart");
-} catch (err) {
-alert(err.response?.data?.message || "Login required");
-}
-};
+  /* ---------------- TOGGLE HELPER ---------------- */
 
-return (
-<div className="product-page">
-<div className="shop-container">
+  const toggleArrayFilter = (value, state, setState) => {
+    setState(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    );
+  };
 
-{/* PRODUCTS GRID */}
-<div className="product-grid">
-{products.map(item => {
+  /* ---------------- FILTER LOGIC ---------------- */
 
-const imageUrl = item.images?.[0]
-? item.images[0]
-: "https://via.placeholder.com/300x400?text=No+Image";
+  const filteredProducts = useMemo(() => {
 
-return (
-<div className="product-card" key={item._id} onClick={() => navigate(`/product/${item._id}`)}>
+    let data = [...products];
 
-<div className="image-box">
-{item.featured && <span className="product-tag">Featured</span>}
+    if (selectedCategory.length)
+      data = data.filter(p => selectedCategory.includes(p.category));
 
-<img src={imageUrl} alt={item.name} loading="lazy" />
+    if (selectedFabric.length)
+      data = data.filter(p => selectedFabric.includes(p.fabric));
 
-<button className={`wishlist-icon ${wishlist.includes(item._id) ? "liked" : ""}`}
-onClick={(e)=>{e.stopPropagation();toggleWishlist(item._id);}}>
-<FiHeart fill={wishlist.includes(item._id) ? "currentColor" : "none"} />
-</button>
+    if (selectedWork.length)
+      data = data.filter(p => selectedWork.includes(p.work));
 
-<button className="quick-add-btn"
-onClick={(e)=>{e.stopPropagation();addToCart(item._id);}}>
-<FiPlus /> Quick Add
-</button>
-</div>
+    if (selectedOccasion.length)
+      data = data.filter(p => selectedOccasion.includes(p.occasion));
 
-<div className="product-info">
-<h4 className="product-name">{item.name}</h4>
-<span className="current-price">₹{Number(item.price||0).toLocaleString("en-IN")}</span>
-</div>
+    if (selectedSizes.length)
+      data = data.filter(p =>
+        p.sizes?.some(size => selectedSizes.includes(size))
+      );
 
-</div>
-);
-})}
-</div>
+    if (selectedColors.length)
+      data = data.filter(p =>
+        p.colors?.some(color => selectedColors.includes(color))
+      );
 
-</div>
-</div>
-);
+    data = data.filter(p =>
+      p.price >= priceRange[0] && p.price <= priceRange[1]
+    );
+
+    /* sorting */
+    if (sortType === "low") data.sort((a,b)=>a.price-b.price);
+    if (sortType === "high") data.sort((a,b)=>b.price-a.price);
+    if (sortType === "featured")
+      data.sort((a,b)=> (b.featured===true)-(a.featured===true));
+
+    return data;
+
+  }, [
+    products,
+    selectedCategory,
+    selectedFabric,
+    selectedWork,
+    selectedOccasion,
+    selectedSizes,
+    selectedColors,
+    priceRange,
+    sortType
+  ]);
+
+  /* ---------------- PAGINATION ---------------- */
+
+  const totalPages = Math.ceil(filteredProducts.length / perPage);
+
+  const paginatedProducts = useMemo(()=>{
+    const start = (page-1)*perPage;
+    return filteredProducts.slice(start, start+perPage);
+  },[filteredProducts,page]);
+
+  useEffect(()=>setPage(1),[
+    selectedCategory,
+    selectedFabric,
+    selectedWork,
+    selectedOccasion,
+    selectedSizes,
+    selectedColors,
+    priceRange,
+    sortType
+  ]);
+
+  /* ---------------- UI ---------------- */
+
+  return (
+    <div className="product-page">
+      <div className="shop-container">
+
+        {/* HEADER */}
+        <header className="shop-header">
+          <div className="header-text">
+            <h1 className="page-title">The Signature Collection</h1>
+            <p className="page-sub">
+              Timeless elegance meets contemporary craft.
+            </p>
+          </div>
+
+          <div className="top-bar">
+            <button className="filter-btn" onClick={()=>setShowFilter(true)}>
+              <FiFilter/> Filters
+            </button>
+
+            <select className="sort-select" onChange={(e)=>setSortType(e.target.value)}>
+              <option value="featured">Sort By: Featured</option>
+              <option value="low">Price: Low to High</option>
+              <option value="high">Price: High to Low</option>
+            </select>
+          </div>
+        </header>
+
+        {/* OVERLAY */}
+        <div className={`overlay ${showFilter?"active":""}`} onClick={()=>setShowFilter(false)}/>
+
+        {/* FILTER DRAWER */}
+        <aside className={`filter-drawer ${showFilter?"open":""}`}>
+          <div className="drawer-header">
+            <h3>Filters</h3>
+            <FiX onClick={()=>setShowFilter(false)}/>
+          </div>
+
+          <div className="filter-drawer-content">
+
+            {/* CATEGORY */}
+            <div className="filter-section">
+              <h4>Category</h4>
+              {["Saree","Kurti","Gown","Night Dress","Nighty"].map(cat=>(
+                <label key={cat}>
+                  <input type="checkbox"
+                    checked={selectedCategory.includes(cat)}
+                    onChange={()=>toggleArrayFilter(cat,selectedCategory,setSelectedCategory)}
+                  />
+                  {cat}
+                </label>
+              ))}
+            </div>
+
+            {/* FABRIC */}
+            <div className="filter-section">
+              <h4>Fabric</h4>
+              {["Cotton","Silk","Rayon"].map(v=>(
+                <label key={v}>
+                  <input type="checkbox"
+                    checked={selectedFabric.includes(v)}
+                    onChange={()=>toggleArrayFilter(v,selectedFabric,setSelectedFabric)}
+                  />
+                  {v}
+                </label>
+              ))}
+            </div>
+
+            {/* WORK */}
+            <div className="filter-section">
+              <h4>Work</h4>
+              {["Printed","Embroidered","Minimal","Plain"].map(v=>(
+                <label key={v}>
+                  <input type="checkbox"
+                    checked={selectedWork.includes(v)}
+                    onChange={()=>toggleArrayFilter(v,selectedWork,setSelectedWork)}
+                  />
+                  {v}
+                </label>
+              ))}
+            </div>
+
+            {/* OCCASION */}
+            <div className="filter-section">
+              <h4>Occasion</h4>
+              {["Daily Wear","Casual Wear","Festive Wear","Party Wear","Wedding Wear"].map(v=>(
+                <label key={v}>
+                  <input type="checkbox"
+                    checked={selectedOccasion.includes(v)}
+                    onChange={()=>toggleArrayFilter(v,selectedOccasion,setSelectedOccasion)}
+                  />
+                  {v}
+                </label>
+              ))}
+            </div>
+
+            {/* SIZE */}
+            <div className="filter-section">
+              <h4>Size</h4>
+              <div className="size-row">
+                {["XS","S","M","L","XL","Free"].map(size=>(
+                  <span
+                    key={size}
+                    className={selectedSizes.includes(size)?"active":""}
+                    onClick={()=>toggleArrayFilter(size,selectedSizes,setSelectedSizes)}
+                  >
+                    {size}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* COLOR */}
+            <div className="filter-section">
+              <h4>Color</h4>
+              <div className="color-row">
+                {["Red","Maroon","Pink","Blue","Green","Yellow","Black","White","Gold","Silver","Purple","Orange"]
+                  .map(color=>(
+                  <div
+                    key={color}
+                    className={`color ${selectedColors.includes(color)?"active":""}`}
+                    style={{background:color.toLowerCase()}}
+                    onClick={()=>toggleArrayFilter(color,selectedColors,setSelectedColors)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* PRICE */}
+            <div className="filter-section">
+              <h4>Price</h4>
+              <input type="number" placeholder="Min"
+                value={priceRange[0]}
+                onChange={(e)=>setPriceRange([Number(e.target.value),priceRange[1]])}
+              />
+              <input type="number" placeholder="Max"
+                value={priceRange[1]}
+                onChange={(e)=>setPriceRange([priceRange[0],Number(e.target.value)])}
+              />
+            </div>
+
+          </div>
+
+          {/* ACTIONS */}
+          <div className="filter-actions">
+            <button className="clear-btn" onClick={()=>{
+              setSelectedCategory([]);
+              setSelectedFabric([]);
+              setSelectedWork([]);
+              setSelectedOccasion([]);
+              setSelectedSizes([]);
+              setSelectedColors([]);
+              setPriceRange([0,100000]);
+            }}>
+              Clear
+            </button>
+
+            <button className="apply-btn" onClick={()=>setShowFilter(false)}>
+              Apply
+            </button>
+          </div>
+        </aside>
+
+        {/* PRODUCT GRID */}
+        <div className="product-grid">
+          {paginatedProducts.map(item=>(
+            <div className="product-card" key={item._id}>
+
+              <div className="image-box">
+                {item.featured && <span className="product-tag">Featured</span>}
+
+                <img
+                  src={item.images?.[0]}
+                  alt={item.name}
+                  onClick={()=>navigate(`/product/${item._id}`)}
+                />
+
+                <button
+                  className={`wishlist-icon ${wishlist.includes(item._id)?"liked":""}`}
+                  onClick={()=>toggleWishlist(item._id)}
+                >
+                  <FiHeart/>
+                </button>
+
+                <button className="quick-add-btn" onClick={()=>addToCart(item._id)}>
+                  <FiPlus/> Quick Add
+                </button>
+              </div>
+
+              <div className="product-info">
+                <h4 className="product-name" onClick={()=>navigate(`/product/${item._id}`)}>
+                  {item.name}
+                </h4>
+                <span className="current-price">₹{item.price?.toLocaleString()}</span>
+              </div>
+
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
 }
