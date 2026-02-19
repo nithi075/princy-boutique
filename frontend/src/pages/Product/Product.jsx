@@ -67,16 +67,22 @@ console.log(err.response?.data || err.message);
 
 /* LOAD WISHLIST */
 useEffect(() => {
-const loadWishlist = async () => {
-try {
-const wish = await API.get("/wishlist");
-setWishlistItems(wish.data);
-setWishlist(wish.data.map(i => i.productId._id));
-} catch {}
-};
-loadWishlist();
-}, []);
+  const loadWishlist = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return; // ⛔ DON'T CALL API
 
+    try {
+      const wish = await API.get("/wishlist");
+      setWishlistItems(wish.data);
+      setWishlist(wish.data.map(i => i.productId._id));
+    } catch (err) {
+      console.log("Wishlist skipped (not logged in)");
+    }
+  };
+
+  loadWishlist();
+}, []);
+6
 /* FETCH WHEN FILTER/PAGE CHANGE */
 useEffect(() => {
 fetchProducts();
