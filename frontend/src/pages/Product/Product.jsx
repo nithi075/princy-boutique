@@ -1,357 +1,264 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Product.css";
 import { FiHeart, FiFilter, FiX, FiPlus } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 
 export default function Product() {
 
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
-  /* ---------------- STATES ---------------- */
+/* UI */
+const [showFilter, setShowFilter] = useState(false);
 
-  const [products, setProducts] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  const [showFilter, setShowFilter] = useState(false);
+/* DATA */
+const [products, setProducts] = useState([]);
+const [wishlist, setWishlist] = useState([]);
+const [wishlistItems, setWishlistItems] = useState([]);
 
-  /* filters */
-  const [selectedCategory, setSelectedCategory] = useState([]);
-  const [selectedFabric, setSelectedFabric] = useState([]);
-  const [selectedWork, setSelectedWork] = useState([]);
-  const [selectedOccasion, setSelectedOccasion] = useState([]);
-  const [selectedSizes, setSelectedSizes] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 100000]);
+/* PAGINATION */
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const limit = 8;
 
-  /* sort */
-  const [sortType, setSortType] = useState("featured");
+/* FILTER STATES */
+const [category, setCategory] = useState([]);
+const [priceRange, setPriceRange] = useState([0,100000]);
+const [color, setColor] = useState([]);
+const [size, setSize] = useState([]);
+const [fabric, setFabric] = useState([]);
+const [work, setWork] = useState([]);
+const [occasion, setOccasion] = useState([]);
 
-  /* pagination */
-  const [page, setPage] = useState(1);
-  const perPage = 8;
+/* OPTIONS */
+const categories = ["Saree","Kurti","Gown","Night Dress","Nighty"];
+const fabrics = ["Cotton","Silk","Rayon"];
+const works = ["Printed","Embroidered","Minimal","Plain"];
+const occasions = ["Daily Wear","Casual Wear","Festive Wear","Party Wear","Wedding Wear"];
+const sizes = ["XS","S","M","L","XL","Free"];
+const colors = ["Red","Maroon","Pink","Blue","Green","Yellow","Black","White","Gold","Silver","Purple","Orange"];
 
-  /* ---------------- FETCH ---------------- */
+/* SAFE ARRAY PARSER */
+const parseArray = (value) => {
+if (Array.isArray(value)) return value;
+if (!value) return [];
+try { return JSON.parse(value); }
+catch { return [value]; }
+};
 
-  useEffect(() => {
-    fetchProducts();
-    fetchWishlist();
-  }, []);
+/* FETCH PRODUCTS (SERVER FILTERING) */
+const fetchProducts = async () => {
+try {
 
-  const parseArray = (value) => {
-    if (Array.isArray(value)) return value;
-    if (!value) return [];
-    if (typeof value === "string") {
-      try { return JSON.parse(value); }
-      catch { return [value]; }
-    }
-    return [];
-  };
+const res = await API.get("/products", {
+params: {
+page: currentPage,
+limit,
+category: category.join(","),
+fabric: fabric.join(","),
+work: work.join(","),
+occasion: occasion.join(","),
+size: size.join(","),
+color: color.join(","),
+minPrice: priceRange[0],
+maxPrice: priceRange[1]
+}
+});
 
-  const fetchProducts = async () => {
-    const res = await API.get("/products");
+const safeProducts = res.data.products.map(p => ({
+...p,
+sizes: parseArray(p.sizes),
+colors: parseArray(p.colors),
+images: parseArray(p.images)
+}));
 
-    const safeProducts = res.data.map(p => ({
-      ...p,
-      sizes: parseArray(p.sizes),
-      colors: parseArray(p.colors),
-      images: parseArray(p.images)
-    }));
+setProducts(safeProducts);
+setTotalPages(res.data.totalPages || 1);
 
-    setProducts(safeProducts);
-  };
+} catch (err) {
+console.log(err.response?.data || err.message);
+}
+};
 
-  const fetchWishlist = async () => {
-    try {
-      const res = await API.get("/wishlist");
-      setWishlist(res.data.map(w => w.productId));
-    } catch {}
-  };
+/* LOAD WISHLIST */
+useEffect(() => {
+const loadWishlist = async () => {
+const token = localStorage.getItem("token");
+if (!token) return;
 
-  /* ---------------- WISHLIST ---------------- */
+try {
+const wish = await API.get("/wishlist");
+setWishlistItems(wish.data);
+setWishlist(wish.data.map(i => i.productId._id));
+} catch {}
+};
+loadWishlist();
+}, []);
 
-  const toggleWishlist = async (id) => {
-    await API.post("/wishlist", { productId: id });
+/* FETCH WHEN FILTER/PAGE CHANGE */
+useEffect(() => {
+fetchProducts();
+}, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
 
-    setWishlist(prev =>
-      prev.includes(id)
-        ? prev.filter(i => i !== id)
-        : [...prev, id]
-    );
-  };
+/* RESET PAGE ON FILTER */
+useEffect(() => {
+setCurrentPage(1);
+}, [category, priceRange, color, size, fabric, work, occasion]);
 
-  /* ---------------- CART ---------------- */
+/* MULTI SELECT */
+const toggleMulti = (setter, state, value) => {
+setter(state.includes(value) ? state.filter(v => v !== value) : [...state, value]);
+};
 
-  const addToCart = async (id) => {
-    await API.post("/cart", { productId: id, quantity: 1 });
-    alert("Added to cart 🛒");
-  };
+/* CLEAR FILTERS */
+const clearFilters = () => {
+setCategory([]);
+setPriceRange([0,100000]);
+setColor([]);
+setSize([]);
+setFabric([]);
+setWork([]);
+setOccasion([]);
+};
 
-  /* ---------------- TOGGLE HELPER ---------------- */
+/* WISHLIST */
+const toggleWishlist = async (productId) => {
+try {
+if (wishlist.includes(productId)) {
+const item = wishlistItems.find(i => i.productId._id === productId);
+await API.delete(`/wishlist/${item._id}`);
+setWishlist(wishlist.filter(id => id !== productId));
+} else {
+const res = await API.post("/wishlist", { productId });
+setWishlist([...wishlist, productId]);
+setWishlistItems([...wishlistItems, res.data]);
+}
+} catch {}
+};
 
-  const toggleArrayFilter = (value, state, setState) => {
-    setState(prev =>
-      prev.includes(value)
-        ? prev.filter(v => v !== value)
-        : [...prev, value]
-    );
-  };
+/* CART */
+const addToCart = async (productId) => {
+try {
+await API.post("/cart", { productId, quantity: 1 });
+alert("Added to cart 🛒");
+} catch {
+alert("Login required");
+}
+};
 
-  /* ---------------- FILTER LOGIC ---------------- */
+return (
+<div className="product-page">
+<div className="shop-container">
 
-  const filteredProducts = useMemo(() => {
+{/* FILTER BUTTON */}
+<button className="filter-btn" onClick={()=>setShowFilter(true)}>
+<FiFilter/> Filters
+</button>
 
-    let data = [...products];
+{/* FILTER DRAWER */}
+<div className={`overlay ${showFilter?"active":""}`} onClick={()=>setShowFilter(false)} />
 
-    if (selectedCategory.length)
-      data = data.filter(p => selectedCategory.includes(p.category));
+<aside className={`filter-drawer ${showFilter?"open":""}`}>
+<div className="drawer-header">
+<h3>Filters</h3>
+<FiX onClick={()=>setShowFilter(false)}/>
+</div>
 
-    if (selectedFabric.length)
-      data = data.filter(p => selectedFabric.includes(p.fabric));
+<div className="filter-drawer-content">
 
-    if (selectedWork.length)
-      data = data.filter(p => selectedWork.includes(p.work));
+{/* CATEGORY */}
+<div className="filter-section">
+<h4>Category</h4>
+{categories.map(c=>(
+<label key={c}>
+<input type="checkbox" checked={category.includes(c)}
+onChange={()=>toggleMulti(setCategory,category,c)}/>
+{c}
+</label>
+))}
+</div>
 
-    if (selectedOccasion.length)
-      data = data.filter(p => selectedOccasion.includes(p.occasion));
+{/* FABRIC */}
+<div className="filter-section">
+<h4>Fabric</h4>
+{fabrics.map(f=>(
+<label key={f}>
+<input type="checkbox" checked={fabric.includes(f)}
+onChange={()=>toggleMulti(setFabric,fabric,f)}/>
+{f}
+</label>
+))}
+</div>
 
-    if (selectedSizes.length)
-      data = data.filter(p =>
-        Array.isArray(p.sizes) &&
-        p.sizes.some(size => selectedSizes.includes(size))
-      );
+{/* SIZE */}
+<div className="filter-section">
+<h4>Size</h4>
+<div className="size-row">
+{sizes.map(s=>(
+<span key={s} className={size.includes(s)?"active":""}
+onClick={()=>toggleMulti(setSize,size,s)}>{s}</span>
+))}
+</div>
+</div>
 
-    if (selectedColors.length)
-      data = data.filter(p =>
-        Array.isArray(p.colors) &&
-        p.colors.some(color => selectedColors.includes(color))
-      );
+{/* COLOR */}
+<div className="filter-section">
+<h4>Color</h4>
+<div className="color-row">
+{colors.map(c=>(
+<div key={c}
+className={`color ${color.includes(c)?"active":""}`}
+style={{background:c.toLowerCase()}}
+onClick={()=>toggleMulti(setColor,color,c)}/>
+))}
+</div>
+</div>
 
-    data = data.filter(p =>
-      p.price >= priceRange[0] && p.price <= priceRange[1]
-    );
+</div>
 
-    /* sorting */
-    if (sortType === "low") data.sort((a,b)=>a.price-b.price);
-    if (sortType === "high") data.sort((a,b)=>b.price-a.price);
-    if (sortType === "featured")
-      data.sort((a,b)=> (b.featured===true)-(a.featured===true));
+<div className="filter-actions">
+<button className="clear-btn" onClick={clearFilters}>Clear</button>
+<button className="apply-btn" onClick={()=>setShowFilter(false)}>Apply</button>
+</div>
+</aside>
 
-    return data;
+{/* PRODUCT GRID */}
+<div className="product-grid">
+{products.map(item=>{
 
-  }, [
-    products,
-    selectedCategory,
-    selectedFabric,
-    selectedWork,
-    selectedOccasion,
-    selectedSizes,
-    selectedColors,
-    priceRange,
-    sortType
-  ]);
+const imageUrl = item.images?.[0] || "/placeholder.png";
 
-  /* ---------------- PAGINATION ---------------- */
+return (
+<div className="product-card" key={item._id}>
 
-  const totalPages = Math.ceil(filteredProducts.length / perPage);
+<div className="image-box">
+{item.featured && <span className="product-tag">Featured</span>}
 
-  const paginatedProducts = useMemo(()=>{
-    const start = (page-1)*perPage;
-    return filteredProducts.slice(start, start+perPage);
-  },[filteredProducts,page]);
+<img src={imageUrl} alt={item.name}
+onClick={()=>navigate(`/product/${item._id}`)}/>
 
-  useEffect(()=>setPage(1),[
-    selectedCategory,
-    selectedFabric,
-    selectedWork,
-    selectedOccasion,
-    selectedSizes,
-    selectedColors,
-    priceRange,
-    sortType
-  ]);
+<button className={`wishlist-icon ${wishlist.includes(item._id)?"liked":""}`}
+onClick={()=>toggleWishlist(item._id)}>
+<FiHeart/>
+</button>
 
-  /* ---------------- UI ---------------- */
+<button className="quick-add-btn" onClick={()=>addToCart(item._id)}>
+<FiPlus/> Quick Add
+</button>
 
-  return (
-    <div className="product-page">
-      <div className="shop-container">
+</div>
 
-        {/* HEADER */}
-        <header className="shop-header">
-          <div className="header-text">
-            <h1 className="page-title">The Signature Collection</h1>
-            <p className="page-sub">
-              Timeless elegance meets contemporary craft.
-            </p>
-          </div>
+<div className="product-info">
+<h4 className="product-name">{item.name}</h4>
+<span className="current-price">₹{Number(item.price||0).toLocaleString("en-IN")}</span>
+</div>
 
-          <div className="top-bar">
-            <button className="filter-btn" onClick={()=>setShowFilter(true)}>
-              <FiFilter/> Filters
-            </button>
+</div>
+);
+})}
+</div>
 
-            <select className="sort-select" onChange={(e)=>setSortType(e.target.value)}>
-              <option value="featured">Sort By: Featured</option>
-              <option value="low">Price: Low to High</option>
-              <option value="high">Price: High to Low</option>
-            </select>
-          </div>
-        </header>
-
-        {/* OVERLAY */}
-        <div className={`overlay ${showFilter?"active":""}`} onClick={()=>setShowFilter(false)}/>
-
-        {/* FILTER DRAWER */}
-        <aside className={`filter-drawer ${showFilter?"open":""}`}>
-          <div className="drawer-header">
-            <h3>Filters</h3>
-            <FiX onClick={()=>setShowFilter(false)}/>
-          </div>
-
-          <div className="filter-drawer-content">
-
-            {/* CATEGORY */}
-            <div className="filter-section">
-              <h4>Category</h4>
-              {["Saree","Kurti","Gown","Night Dress","Nighty"].map(cat=>(
-                <label key={cat}>
-                  <input type="checkbox"
-                    checked={selectedCategory.includes(cat)}
-                    onChange={()=>toggleArrayFilter(cat,selectedCategory,setSelectedCategory)}
-                  />
-                  {cat}
-                </label>
-              ))}
-            </div>
-
-            {/* FABRIC */}
-            <div className="filter-section">
-              <h4>Fabric</h4>
-              {["Cotton","Silk","Rayon"].map(v=>(
-                <label key={v}>
-                  <input type="checkbox"
-                    checked={selectedFabric.includes(v)}
-                    onChange={()=>toggleArrayFilter(v,selectedFabric,setSelectedFabric)}
-                  />
-                  {v}
-                </label>
-              ))}
-            </div>
-
-            {/* WORK */}
-            <div className="filter-section">
-              <h4>Work</h4>
-              {["Printed","Embroidered","Minimal","Plain"].map(v=>(
-                <label key={v}>
-                  <input type="checkbox"
-                    checked={selectedWork.includes(v)}
-                    onChange={()=>toggleArrayFilter(v,selectedWork,setSelectedWork)}
-                  />
-                  {v}
-                </label>
-              ))}
-            </div>
-
-            {/* OCCASION */}
-            <div className="filter-section">
-              <h4>Occasion</h4>
-              {["Daily Wear","Casual Wear","Festive Wear","Party Wear","Wedding Wear"].map(v=>(
-                <label key={v}>
-                  <input type="checkbox"
-                    checked={selectedOccasion.includes(v)}
-                    onChange={()=>toggleArrayFilter(v,selectedOccasion,setSelectedOccasion)}
-                  />
-                  {v}
-                </label>
-              ))}
-            </div>
-
-            {/* SIZE */}
-            <div className="filter-section">
-              <h4>Size</h4>
-              <div className="size-row">
-                {["XS","S","M","L","XL","Free"].map(size=>(
-                  <span
-                    key={size}
-                    className={selectedSizes.includes(size)?"active":""}
-                    onClick={()=>toggleArrayFilter(size,selectedSizes,setSelectedSizes)}
-                  >
-                    {size}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* COLOR */}
-            <div className="filter-section">
-              <h4>Color</h4>
-              <div className="color-row">
-                {["Red","Maroon","Pink","Blue","Green","Yellow","Black","White","Gold","Silver","Purple","Orange"]
-                  .map(color=>(
-                  <div
-                    key={color}
-                    className={`color ${selectedColors.includes(color)?"active":""}`}
-                    style={{background:color.toLowerCase()}}
-                    onClick={()=>toggleArrayFilter(color,selectedColors,setSelectedColors)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* PRICE */}
-            <div className="filter-section">
-              <h4>Price</h4>
-              <input type="number" placeholder="Min"
-                value={priceRange[0]}
-                onChange={(e)=>setPriceRange([Number(e.target.value),priceRange[1]])}
-              />
-              <input type="number" placeholder="Max"
-                value={priceRange[1]}
-                onChange={(e)=>setPriceRange([priceRange[0],Number(e.target.value)])}
-              />
-            </div>
-
-          </div>
-        </aside>
-
-        {/* PRODUCT GRID */}
-        <div className="product-grid">
-          {paginatedProducts.map(item=>(
-            <div className="product-card" key={item._id}>
-
-              <div className="image-box">
-                {item.featured && <span className="product-tag">Featured</span>}
-
-                <img
-                  src={item.images?.[0] || "/placeholder.png"}
-                  alt={item.name}
-                  onClick={()=>navigate(`/product/${item._id}`)}
-                />
-
-                <button
-                  className={`wishlist-icon ${wishlist.includes(item._id)?"liked":""}`}
-                  onClick={()=>toggleWishlist(item._id)}
-                >
-                  <FiHeart/>
-                </button>
-
-                <button className="quick-add-btn" onClick={()=>addToCart(item._id)}>
-                  <FiPlus/> Quick Add
-                </button>
-              </div>
-
-              <div className="product-info">
-                <h4 className="product-name" onClick={()=>navigate(`/product/${item._id}`)}>
-                  {item.name}
-                </h4>
-                <span className="current-price">₹{item.price?.toLocaleString()}</span>
-              </div>
-
-            </div>
-          ))}
-        </div>
-
-      </div>
-    </div>
-  );
+</div>
+</div>
+);
 }
