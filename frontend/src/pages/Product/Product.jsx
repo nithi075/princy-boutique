@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Product.css";
 import { FiHeart, FiFilter, FiX, FiPlus } from "react-icons/fi";
@@ -30,7 +30,9 @@ const [fabric, setFabric] = useState([]);
 const [work, setWork] = useState([]);
 const [occasion, setOccasion] = useState([]);
 
-/* OPTIONS FROM ADD PRODUCT */
+const firstLoad = useRef(true);
+
+/* OPTIONS */
 const categories = ["Sharara","Kurti","Gown","Night Dress","Short Kurti"];
 const fabrics = ["Cotton","Silk","Rayon"];
 const works = ["Printed","Embroidered","Minimal","Plain"];
@@ -46,23 +48,32 @@ try { return JSON.parse(value); }
 catch { return [value]; }
 };
 
+/* BUILD PARAMS CLEAN */
+const buildParams = () => {
+const params = {
+page: currentPage,
+limit
+};
+
+if(category.length) params.category = category.join(",");
+if(fabric.length) params.fabric = fabric.join(",");
+if(work.length) params.work = work.join(",");
+if(occasion.length) params.occasion = occasion.join(",");
+if(size.length) params.size = size.join(",");
+if(color.length) params.color = color.join(",");
+
+if(priceRange[0] > 0) params.minPrice = priceRange[0];
+if(priceRange[1] < 100000) params.maxPrice = priceRange[1];
+
+return params;
+};
+
 /* FETCH PRODUCTS */
 const fetchProducts = async () => {
 try {
 
 const res = await API.get("/products", {
-params: {
-page: currentPage,
-limit,
-category: category.join(","),
-fabric: fabric.join(","),
-work: work.join(","),
-occasion: occasion.join(","),
-size: size.join(","),
-color: color.join(","),
-minPrice: priceRange[0],
-maxPrice: priceRange[1]
-}
+params: buildParams()
 });
 
 const safeProducts = res.data.products.map(p => ({
@@ -94,8 +105,19 @@ setWishlist(wish.data.map(i => i.productId._id));
 loadWishlist();
 }, []);
 
-useEffect(() => { fetchProducts(); }, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
-useEffect(() => { setCurrentPage(1); }, [category, priceRange, color, size, fabric, work, occasion]);
+/* RESET PAGE WHEN FILTER CHANGE */
+useEffect(() => {
+if(firstLoad.current){
+firstLoad.current = false;
+return;
+}
+setCurrentPage(1);
+}, [category, priceRange, color, size, fabric, work, occasion]);
+
+/* FETCH DATA */
+useEffect(() => {
+fetchProducts();
+}, [currentPage, category, priceRange, color, size, fabric, work, occasion]);
 
 /* MULTI SELECT */
 const toggleMulti = (setter, state, value) => {
@@ -150,132 +172,18 @@ return (
 <div className="product-page">
 <div className="shop-container">
 
-{/* HEADER */}
-
 <header className="shop-header">
 <div className="header-text">
 <h1 className="page-title">The Signature Collection</h1>
-<p className="page-sub">
-Timeless elegance meets contemporary craft.
-</p>
+<p className="page-sub">Timeless elegance meets contemporary craft.</p>
 </div>
 
-<button className="filter-btn" onClick={()=>setShowFilter(true)}> <FiFilter/> Filters </button>
-
+<button className="filter-btn" onClick={()=>setShowFilter(true)}>
+<FiFilter/> Filters
+</button>
 </header>
 
-{/* FILTER DRAWER */}
-
-<div className={`overlay ${showFilter?"active":""}`} onClick={()=>setShowFilter(false)} />
-
-<aside className={`filter-drawer ${showFilter?"open":""}`}>
-<div className="drawer-header">
-<h3>Filters</h3>
-<FiX onClick={()=>setShowFilter(false)}/>
-</div>
-
-<div className="filter-drawer-content">
-
-{/* CATEGORY */}
-
-<div className="filter-section">
-<h4>Category</h4>
-{categories.map(c=>(
-<label key={c}>
-<input type="checkbox" checked={category.includes(c)}
-onChange={()=>toggleMulti(setCategory,category,c)}/>
-{c}
-</label>
-))}
-</div>
-
-{/* FABRIC */}
-
-<div className="filter-section">
-<h4>Fabric</h4>
-{fabrics.map(f=>(
-<label key={f}>
-<input type="checkbox" checked={fabric.includes(f)}
-onChange={()=>toggleMulti(setFabric,fabric,f)}/>
-{f}
-</label>
-))}
-</div>
-
-{/* WORK */}
-
-<div className="filter-section">
-<h4>Work</h4>
-{works.map(w=>(
-<label key={w}>
-<input type="checkbox" checked={work.includes(w)}
-onChange={()=>toggleMulti(setWork,work,w)}/>
-{w}
-</label>
-))}
-</div>
-
-{/* OCCASION */}
-
-<div className="filter-section">
-<h4>Occasion</h4>
-{occasions.map(o=>(
-<label key={o}>
-<input type="checkbox" checked={occasion.includes(o)}
-onChange={()=>toggleMulti(setOccasion,occasion,o)}/>
-{o}
-</label>
-))}
-</div>
-
-{/* SIZE */}
-
-<div className="filter-section">
-<h4>Size</h4>
-<div className="size-row">
-{sizes.map(s=>(
-<span key={s} className={size.includes(s)?"active":""}
-onClick={()=>toggleMulti(setSize,size,s)}>{s}</span>
-))}
-</div>
-</div>
-
-{/* COLOR */}
-
-<div className="filter-section">
-<h4>Color</h4>
-<div className="color-row">
-{colors.map(c=>(
-<div key={c}
-className={`color ${color.includes(c)?"active":""}`}
-style={{background:c.toLowerCase()}}
-onClick={()=>toggleMulti(setColor,color,c)}/>
-))}
-</div>
-</div>
-
-{/* PRICE */}
-
-<div className="filter-section">
-<h4>Price</h4>
-<input type="number" placeholder="Min"
-value={priceRange[0]}
-onChange={(e)=>setPriceRange([Number(e.target.value),priceRange[1]])}/>
-<input type="number" placeholder="Max"
-value={priceRange[1]}
-onChange={(e)=>setPriceRange([priceRange[0],Number(e.target.value)])}/>
-</div>
-
-</div>
-
-<div className="filter-actions">
-<button className="clear-btn" onClick={clearFilters}>Clear</button>
-<button className="apply-btn" onClick={()=>setShowFilter(false)}>Apply</button>
-</div>
-</aside>
-
 {/* PRODUCTS */}
-
 <div className="product-grid">
 {products.map(item=>(
 <div className="product-card" key={item._id}>
@@ -289,21 +197,24 @@ onClick={()=>toggleWishlist(item._id)}><FiHeart/></button>
 </div>
 <div className="product-info">
 <h4 className="product-name">{item.name}</h4>
-<span className="current-price">₹{Number(item.price||0).toLocaleString("en-IN")}</span>
+<span className="current-price">
+₹{Number(item.price||0).toLocaleString("en-IN")}
+</span>
 </div>
 </div>
 ))}
 </div>
 
 {/* PAGINATION */}
-
 <div className="pagination">
-<button className="page-btn" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)}>Prev</button>
+<button disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)}>Prev</button>
+
 {Array.from({length:totalPages},(_,i)=>(
-<button key={i} className={`page-number ${currentPage===i+1?"active":""}`}
+<button key={i} className={currentPage===i+1?"active":""}
 onClick={()=>goToPage(i+1)}>{i+1}</button>
 ))}
-<button className="page-btn" disabled={currentPage===totalPages} onClick={()=>goToPage(currentPage+1)}>Next</button>
+
+<button disabled={currentPage===totalPages} onClick={()=>goToPage(currentPage+1)}>Next</button>
 </div>
 
 </div>

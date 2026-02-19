@@ -16,6 +16,14 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
 
+  /* 🔧 SAME PARSER AS PRODUCT PAGE */
+  const parseArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    try { return JSON.parse(value); }
+    catch { return [value]; }
+  };
+
   /* ================= LIVE SEARCH ================= */
   useEffect(() => {
 
@@ -30,7 +38,15 @@ export default function Home() {
         const res = await API.get(
           `/products/search?q=${encodeURIComponent(query)}`
         );
-        setResults(res.data);
+
+        // ✅ FIX: convert images string → array
+        const safeResults = res.data.map(p => ({
+          ...p,
+          images: parseArray(p.images)
+        }));
+
+        setResults(safeResults);
+
       } catch (err) {
         console.log("Search error:", err.message);
         setResults([]);
@@ -64,28 +80,31 @@ export default function Home() {
 
         {results.length > 0 && (
           <div className="search-dropdown">
-            {results.map(item => (
-              <div
-                key={item._id}
-                className="search-item"
-                onClick={() => openProduct(item._id)}
-              >
-                <img
-                  src={
-                    item.images?.[0]
-                      ? `http://localhost:5000${item.images[0]}`
-                      : "https://via.placeholder.com/60x70?text=No+Image"
-                  }
-                  alt={item.name}
-                />
+            {results.map(item => {
 
-                <div className="search-info">
-                  <p>{item.name}</p>
-                  <span>₹{Number(item.price || 0).toLocaleString("en-IN")}</span>
+              // same logic as featured products
+              const imageUrl =
+                item.images?.[0] ||
+                "https://via.placeholder.com/60x70?text=No+Image";
+
+              return (
+                <div
+                  key={item._id}
+                  className="search-item"
+                  onClick={() => openProduct(item._id)}
+                >
+                  <img src={imageUrl} alt={item.name} />
+
+                  <div className="search-info">
+                    <p>{item.name}</p>
+                    <span>
+                      ₹{Number(item.price || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
                 </div>
-
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
