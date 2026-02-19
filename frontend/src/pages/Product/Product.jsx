@@ -46,7 +46,7 @@ try { return JSON.parse(value); }
 catch { return [value]; }
 };
 
-/* FETCH PRODUCTS (SERVER FILTERING) */
+/* FETCH PRODUCTS */
 const fetchProducts = async () => {
 try {
 
@@ -80,21 +80,6 @@ console.log(err.response?.data || err.message);
 }
 };
 
-/* LOAD WISHLIST */
-useEffect(() => {
-const loadWishlist = async () => {
-const token = localStorage.getItem("token");
-if (!token) return;
-
-try {
-const wish = await API.get("/wishlist");
-setWishlistItems(wish.data);
-setWishlist(wish.data.map(i => i.productId._id));
-} catch {}
-};
-loadWishlist();
-}, []);
-
 /* FETCH WHEN FILTER/PAGE CHANGE */
 useEffect(() => {
 fetchProducts();
@@ -119,6 +104,13 @@ setSize([]);
 setFabric([]);
 setWork([]);
 setOccasion([]);
+};
+
+/* PAGINATION HANDLER */
+const goToPage = (page) => {
+if(page < 1 || page > totalPages) return;
+setCurrentPage(page);
+window.scrollTo({ top:0, behavior:"smooth" });
 };
 
 /* WISHLIST */
@@ -147,15 +139,15 @@ alert("Login required");
 };
 
 return (
+
 <div className="product-page">
 <div className="shop-container">
 
 {/* FILTER BUTTON */}
-<button className="filter-btn" onClick={()=>setShowFilter(true)}>
-<FiFilter/> Filters
-</button>
+<button className="filter-btn" onClick={()=>setShowFilter(true)}> <FiFilter/> Filters </button>
 
 {/* FILTER DRAWER */}
+
 <div className={`overlay ${showFilter?"active":""}`} onClick={()=>setShowFilter(false)} />
 
 <aside className={`filter-drawer ${showFilter?"open":""}`}>
@@ -167,6 +159,7 @@ return (
 <div className="filter-drawer-content">
 
 {/* CATEGORY */}
+
 <div className="filter-section">
 <h4>Category</h4>
 {categories.map(c=>(
@@ -179,6 +172,7 @@ onChange={()=>toggleMulti(setCategory,category,c)}/>
 </div>
 
 {/* FABRIC */}
+
 <div className="filter-section">
 <h4>Fabric</h4>
 {fabrics.map(f=>(
@@ -190,28 +184,16 @@ onChange={()=>toggleMulti(setFabric,fabric,f)}/>
 ))}
 </div>
 
-{/* SIZE */}
-<div className="filter-section">
-<h4>Size</h4>
-<div className="size-row">
-{sizes.map(s=>(
-<span key={s} className={size.includes(s)?"active":""}
-onClick={()=>toggleMulti(setSize,size,s)}>{s}</span>
-))}
-</div>
-</div>
+{/* PRICE */}
 
-{/* COLOR */}
 <div className="filter-section">
-<h4>Color</h4>
-<div className="color-row">
-{colors.map(c=>(
-<div key={c}
-className={`color ${color.includes(c)?"active":""}`}
-style={{background:c.toLowerCase()}}
-onClick={()=>toggleMulti(setColor,color,c)}/>
-))}
-</div>
+<h4>Price</h4>
+<input type="number" placeholder="Min"
+value={priceRange[0]}
+onChange={(e)=>setPriceRange([Number(e.target.value),priceRange[1]])}/>
+<input type="number" placeholder="Max"
+value={priceRange[1]}
+onChange={(e)=>setPriceRange([priceRange[0],Number(e.target.value)])}/>
 </div>
 
 </div>
@@ -223,28 +205,19 @@ onClick={()=>toggleMulti(setColor,color,c)}/>
 </aside>
 
 {/* PRODUCT GRID */}
+
 <div className="product-grid">
-{products.map(item=>{
-
-const imageUrl = item.images?.[0] || "/placeholder.png";
-
-return (
+{products.map(item=>(
 <div className="product-card" key={item._id}>
 
 <div className="image-box">
-{item.featured && <span className="product-tag">Featured</span>}
-
-<img src={imageUrl} alt={item.name}
+<img src={item.images?.[0] || "/placeholder.png"} alt={item.name}
 onClick={()=>navigate(`/product/${item._id}`)}/>
 
 <button className={`wishlist-icon ${wishlist.includes(item._id)?"liked":""}`}
-onClick={()=>toggleWishlist(item._id)}>
-<FiHeart/>
-</button>
+onClick={()=>toggleWishlist(item._id)}> <FiHeart/> </button>
 
-<button className="quick-add-btn" onClick={()=>addToCart(item._id)}>
-<FiPlus/> Quick Add
-</button>
+<button className="quick-add-btn" onClick={()=>addToCart(item._id)}> <FiPlus/> Quick Add </button>
 
 </div>
 
@@ -254,8 +227,25 @@ onClick={()=>toggleWishlist(item._id)}>
 </div>
 
 </div>
-);
-})}
+))}
+</div>
+
+{/* PAGINATION UI */}
+
+<div className="pagination">
+<button className="page-btn" disabled={currentPage===1}
+onClick={()=>goToPage(currentPage-1)}>Prev</button>
+
+{Array.from({length:totalPages},(_,i)=>(
+<button key={i}
+className={`page-number ${currentPage===i+1?"active":""}`}
+onClick={()=>goToPage(i+1)}>
+{i+1} </button>
+))}
+
+<button className="page-btn" disabled={currentPage===totalPages}
+onClick={()=>goToPage(currentPage+1)}>Next</button>
+
 </div>
 
 </div>
