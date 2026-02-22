@@ -4,7 +4,7 @@ import API from "../../api/axios";
 
 export default function Checkout() {
 
-  const BASE_URL = "http://localhost:5000"; // change after deployment
+  const BASE_URL = "https://princy-boutique-backend.onrender.com"; // change after deployment
 
   const [form, setForm] = useState({
     name: "",
@@ -90,7 +90,7 @@ ${itemsText}
 💰 Total: ₹${total}
 `;
 
-    const whatsappNumber = "918667041407";
+    const whatsappNumber = "919786393214"; // with country code
     const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
     try {

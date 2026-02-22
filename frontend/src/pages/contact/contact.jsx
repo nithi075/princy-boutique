@@ -17,8 +17,7 @@ export default function Contact() {
           <p className="contact-sub">GET IN TOUCH</p>
           <h1>Contact Us</h1>
           <p className="contact-desc">
-            We'd love to hear from you. Please fill out the form below 
-            or reach us through any of the following ways.
+             For enquiries and support, use the information below.
           </p>
         </div>
       </div>
